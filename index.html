@@ -77,6 +77,13 @@
       phaseLabel.textContent = text;
     }
 
+    function handleImageError(img) {
+      // 画像が読み込めない場合のプレースホルダー画像
+      img.onerror = function() {
+        this.src = 'https://placehold.co/600x400/4B5563/9CA3AF?text=No+Image';
+      };
+    }
+
     function openVeil(next) {
       veil.classList.remove('hidden');
       veil.classList.add('flex');
@@ -105,40 +112,57 @@
       state.phase = 'pick';
       setPhaseLabel('シナリオ選択');
       titleEl.textContent = 'シナリオ未選択';
+      
+      // シナリオキーから画像パスを自動生成
+      const getScenarioImage = (scenarioKey) => `public/images/${scenarioKey}/cover.jpg`;
+      
+      // カラーテーマの定義
+      const colorThemes = {
+        red: {
+          border: 'border-red-800/50 hover:border-red-600',
+          title: 'text-red-400',
+          button: 'bg-red-800 hover:bg-red-700',
+          placeholder: 'https://placehold.co/600x400/991B1B/FCA5A5?text=No+Image'
+        },
+        green: {
+          border: 'border-green-800/50 hover:border-green-600',
+          title: 'text-green-400',
+          button: 'bg-green-800 hover:bg-green-700',
+          placeholder: 'https://placehold.co/600x400/166534/86EFAC?text=No+Image'
+        }
+      };
+      
+      // シナリオカードを動的生成
+      const scenarioCards = Object.entries(SCENARIOS).map(([key, scenario]) => {
+        const theme = colorThemes[scenario.color] || colorThemes.red;
+        return `
+          <div class="bg-gray-900/70 rounded-xl ${theme.border} transition-all duration-300 flex flex-col overflow-hidden">
+            <img src="${getScenarioImage(key)}" alt="${scenario.shortTitle}" class="w-full h-40 object-cover" onerror="this.src='${theme.placeholder}'">
+            <div class="p-6 flex flex-col flex-grow">
+              <h3 class="text-xl font-bold ${theme.title}">${scenario.shortTitle}</h3>
+              <p class="text-gray-400 mt-2 mb-4 flex-grow">${scenario.description}</p>
+              <button class="w-full mt-auto ${theme.button} text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105" id="pick-${key}">このシナリオを読み込む</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
       screen.innerHTML = `
         <div class="bg-gray-800/50 rounded-2xl p-6 shadow-lg border border-gray-700">
           <h2 class="text-2xl font-bold text-yellow-300 mb-4">シナリオを選択</h2>
           <p class="text-gray-400 mb-6">プレイしたい歴史シナリオを選んでください。（3人プレイ専用です）</p>
           <div class="grid md:grid-cols-2 gap-6">
-            <!-- Honnoji Card -->
-            <div class="bg-gray-900/70 rounded-xl border border-red-800/50 hover:border-red-600 transition-all duration-300 flex flex-col overflow-hidden">
-              <img src="${SCENARIOS.honnoji.image}" alt="本能寺の変" class="w-full h-40 object-cover">
-              <div class="p-6 flex flex-col flex-grow">
-                <h3 class="text-xl font-bold text-red-400">本能寺の変</h3>
-                <p class="text-gray-400 mt-2 mb-4 flex-grow">王道のテーマ。織田信長は誰に殺されたか。</p>
-                <button class="w-full mt-auto bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105" id="pickHonnoji">このシナリオを読み込む</button>
-              </div>
-            </div>
-            <!-- Rikyu Card -->
-            <div class="bg-gray-900/70 rounded-xl border border-green-800/50 hover:border-green-600 transition-all duration-300 flex flex-col overflow-hidden">
-              <img src="${SCENARIOS.rikyu.image}" alt="千利休" class="w-full h-40 object-cover">
-              <div class="p-6 flex flex-col flex-grow">
-                <h3 class="text-xl font-bold text-green-400">千利休の切腹</h3>
-                <p class="text-gray-400 mt-2 mb-4 flex-grow">天下人の逆鱗に触れた真の理由とは。</p>
-                <button class="w-full mt-auto bg-green-800 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105" id="pickRikyu">このシナリオを読み込む</button>
-              </div>
-            </div>
+            ${scenarioCards}
           </div>
         </div>`;
 
-      $('#pickHonnoji').onclick = () => {
-        SCENARIO = SCENARIOS.honnoji;
-        afterScenarioLoaded();
-      };
-      $('#pickRikyu').onclick = () => {
-        SCENARIO = SCENARIOS.rikyu;
-        afterScenarioLoaded();
-      };
+      // 各シナリオボタンにイベントリスナーを設定
+      Object.keys(SCENARIOS).forEach(key => {
+        $(`#pick-${key}`).onclick = () => {
+          SCENARIO = SCENARIOS[key];
+          afterScenarioLoaded();
+        };
+      });
     }
 
     function afterScenarioLoaded() {

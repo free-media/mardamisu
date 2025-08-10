@@ -4,7 +4,9 @@
 const SCENARIOS = {
   honnoji: {
     title: '本能寺の変 - 信長を殺したのは誰か',
-    image: 'http://googleusercontent.com/file_content/1', // 画像URLを追加
+    shortTitle: '本能寺の変',
+    description: '王道のテーマ。織田信長は誰に殺されたか。',
+    color: 'red',
     setting: { era:'安土桃山時代', place:'京都・本能寺', status:'天下統一を目前にした織田信長が家臣に裏切られ襲撃された。' },
     victim: { name:'織田信長', cause:'不明（焼死体のため特定不能）', spot:'本能寺・本殿', time:'天正10年6月2日未明' },
     culpritCharacterKey: 'mitsuhide',
@@ -26,7 +28,9 @@ const SCENARIOS = {
   },
   rikyu: {
     title: '千利休の切腹 - 利休を追い込んだ黒幕',
-    image: 'https://placehold.co/600x400/2E8B57/FFFFFF?text=%E5%8D%83%E5%88%A9%E4%BC%91', // Placeholder image
+    shortTitle: '千利休の切腹',
+    description: '天下人の逆鱗に触れた真の理由とは。',
+    color: 'green',
     setting: { era:'安土桃山時代', place:'京都・聚楽第', status:'茶の湯を大成させた千利休が、天下人・秀吉の怒りを買い切腹を命じられた。' },
     victim: { name:'千利休', cause:'切腹', spot:'自邸', time:'天正19年2月28日' },
     culpritCharacterKey: 'hideyoshi',
