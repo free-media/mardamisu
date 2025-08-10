@@ -4,937 +4,490 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>マーダーミステリー（オフライン簡易版）</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root{
-      --red:#8B0000; /* ダークレッド */
-      --gold:#FFD700; /* ゴールド */
-      --bg:#2C2C2C;   /* ダークグレー */
-      --text:#FFFFFF; /* ホワイト */
-      --muted:#999;
-      --card:#3a3a3a;
-      --accent:#b22222;
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
     }
-    html,body{height:100%}
-    body{ margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP"; background:linear-gradient(180deg,#1e1e1e,var(--bg)); color:var(--text) }
-    header{ display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--red); border-bottom:1px solid #000; position:sticky; top:0; z-index:3 }
-    header h1{ font-size:16px; margin:0; letter-spacing:.02em }
-    header .phase{ font-weight:700 }
-    main{ max-width:980px; margin:24px auto; padding:0 16px }
-    .card{ background:var(--card); border:1px solid #000; border-radius:12px; padding:16px; box-shadow:0 6px 20px rgba(0,0,0,.35) }
-    .row{ display:grid; gap:16px }
-    .row.cols-2{ grid-template-columns: 1fr 1fr }
-    @media (max-width: 800px){ .row.cols-2{ grid-template-columns: 1fr } }
-    .btn{ appearance:none; border:0; padding:12px 16px; border-radius:10px; cursor:pointer; font-weight:700; color:#fff; background:var(--accent); box-shadow:0 6px 18px rgba(0,0,0,.35) }
-    .btn.secondary{ background:#444 }
-    .btn:disabled{ opacity:.6; cursor:not-allowed }
-    .btn:hover{ filter:brightness(1.08) }
-    .btn:active{ transform: translateY(1px) }
-    .bar{ height:10px; background:#444; border-radius:8px; overflow:hidden }
-    .fill{ height:100%; background:linear-gradient(90deg, var(--gold), #ff9f1a) }
-    .muted{ color:var(--muted) }
-    .list{ margin:8px 0 0 0; padding:0 0 0 18px }
-    .pill{ display:inline-block; padding:4px 10px; border-radius:999px; background:#4a4a4a; font-size:12px; margin-right:6px }
-    .grid{ display:grid; grid-template-columns: 1fr 2fr; gap:20px }
-    @media (max-width: 860px){ .grid{ grid-template-columns: 1fr } }
-    .char{ border-left:4px solid var(--gold); padding-left:12px }
-    .evidence{ border-left:4px solid var(--red); padding-left:12px }
-    .veil{ position:fixed; inset:0; background:#111; display:none; align-items:center; justify-content:center; z-index:9999 }
-    .veil.active{ display:flex }
-    .veil .panel{ background:#181818; border:1px solid #000; border-radius:16px; padding:24px; max-width:520px; text-align:center }
-    .vote-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:12px }
-    .vote-btn{ background:#4b1b1b; border:1px solid #5d2222; padding:14px; border-radius:12px; cursor:pointer; text-align:left }
-    .vote-btn:hover{ filter:brightness(1.1) }
-    .vote-btn small{ display:block; color:#ccc }
-    .result-row{ display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:10px; background:#393939; margin-bottom:8px }
-    .result-row.winner{ outline:2px solid var(--gold) }
-    .footer-note{ font-size:12px; color:#bbb; margin-top:8px }
-    .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace; background:#000; color:#fff; padding:2px 6px; border-radius:6px; border:1px solid #444 }
+    .font-noto {
+        font-family: 'Noto Sans JP', sans-serif;
+    }
   </style>
 </head>
-<body>
-  <header>
-    <h1 id="title">シナリオ未選択</h1>
-    <div class="phase" id="phaseLabel">シナリオ選択</div>
+<body class="bg-gray-900 text-white font-noto">
+  <!-- Header -->
+  <header class="bg-red-900/80 backdrop-blur-sm sticky top-0 z-10 border-b border-black/50">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <h1 id="title" class="text-lg font-bold text-yellow-300 tracking-wider">シナリオ未選択</h1>
+            <div id="phaseLabel" class="text-sm font-semibold bg-white/20 text-white py-1 px-3 rounded-full">シナリオ選択</div>
+        </div>
+    </div>
   </header>
-  <main>
+
+  <!-- Main Content -->
+  <main class="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
     <div id="screen"></div>
   </main>
 
-  <div class="veil" id="veil">
-    <div class="panel">
-      <h2>画面を隠して端末を渡してください</h2>
-      <p class="muted">次のプレイヤーが準備できたら、下のボタンを押してください。</p>
-      <button class="btn" id="veilContinue">準備OK</button>
+  <!-- Veil for player transition -->
+  <div id="veil" class="fixed inset-0 bg-black/90 flex-col items-center justify-center z-50 hidden">
+    <div class="bg-gray-800 border border-yellow-400/30 rounded-2xl p-8 max-w-md text-center shadow-2xl shadow-yellow-400/10">
+      <h2 class="text-2xl font-bold text-yellow-300 mb-4">画面を隠してください</h2>
+      <p class="text-gray-400 mb-6">次のプレイヤーの準備ができたら、下のボタンを押して端末を渡してください。</p>
+      <button id="veilContinue" class="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50">準備OK</button>
     </div>
   </div>
 
   <script>
     // ==============================
-    // シナリオ ローダ
+    // Game Elements
     // ==============================
     const titleEl = document.getElementById('title');
     const phaseLabel = document.getElementById('phaseLabel');
     const screen = document.getElementById('screen');
+    const veil = document.getElementById('veil');
+    const veilContinueBtn = document.getElementById('veilContinue');
     const $ = (sel) => document.querySelector(sel);
 
-    let SCENARIO = null; // 選択後に代入
-
-    // 配布用想定: ./scenarios 以下にJSONを置く
-    //  - crimson.json（クリムゾン・マンション殺人事件）
-    //  - island.json（蒼き海の孤島殺人事件）
-    const SCENARIO_FILES = {
-      crimson: './scenarios/crimson.json',
-      island: './scenarios/island.json',
-    };
-
-    // file:// で開く場合のフェッチ失敗を考慮してフォールバックも用意
-    const FALLBACK = {
-      crimson: {
-        title: 'クリムゾン・マンション殺人事件',
-        setting: { era:'現代', place:'山奥の豪華別荘「クリムゾン・マンション」', status:'嵐で孤立した別荘で殺人事件が発生' },
-        victim: { name:'富豪の父親（別荘の主人）', cause:'毒殺', spot:'書斎', time:'夜10時頃', weapon:'毒入りのブランデー' },
-        culpritCharacterKey: 'chef',
-        evidences:[
-          {id:1, title:'毒入りブランデーグラス', desc:'被害者の机上で発見。被害者の指紋のみ。'},
-          {id:2, title:'破かれた遺言書の断片', desc:'暖炉付近で見つかる。遺言内容は不明。'},
-          {id:3, title:'薬品の空き瓶', desc:'倉庫で発見。強い苦味のある薬品の痕跡。'},
-        ],
-        characters:[
-          { key:'heir', name:'富豪の息子', role:'大学生', secret:'遺産の前借りを父に断られた。夜10時前に書斎付近にいた。', hint:'被害者は晩酌のブランデーにこだわっていた。' },
-          { key:'secretary', name:'秘書', role:'被害者の右腕', secret:'重要な機密を握り遺言案に異議を唱えていた。', hint:'金庫の番号は被害者の誕生日と関連。' },
-          { key:'chef', name:'料理人', role:'ベテラン', secret:'家族の医療費で借金。倉庫の棚を整理していた。', hint:'倉庫に強い苦味の薬品がある。' },
-          { key:'doctor', name:'医師', role:'家族の友人', secret:'投資で損し借金。苦味の強い処方薬がある。', hint:'砂糖で苦味をごまかすのは難しい。' },
-          { key:'lawyer', name:'弁護士', role:'遺言関与', secret:'最新案のコピーを紛失。', hint:'最新案では配分が大きく変更されていた。' },
-          { key:'gardener', name:'庭師', role:'長年仕える', secret:'理不尽に叱責された過去。温室にいたと主張。', hint:'温室と書斎は屋外経由で短時間移動可能。' },
-        ],
-        truth:{
-          summary:'犯人は料理人。倉庫の薬品をブランデーに混入し香りで苦味をごまかした。',
-          motive:'家族の医療費で逼迫し援助を断られた。',
-          method:'薬品を微量混入→ブランデーで覆い→書斎のグラスで飲ませた',
-        }
-      },
-      island: {
-        title: '蒼き海の孤島殺人事件',
-        setting: { era:'現代', place:'南洋の孤島リゾートホテル', status:'大型台風で島が孤立' },
-        victim: { name:'ホテルのオーナー', cause:'刺殺', spot:'オーナースイート', time:'深夜0時頃', weapon:'銀製のナイフ' },
-        culpritCharacterKey: 'diver',
-        evidences:[
-          {id:1, title:'血のついたナイフ', desc:'胸に刺さったまま。指紋は拭き取り済み。'},
-          {id:2, title:'破れた航海日誌', desc:'港の倉庫で発見。数ページ欠落。'},
-          {id:3, title:'濡れた潜水服', desc:'深夜に使用された痕跡。まだ湿っている。'},
-        ],
-        characters:[
-          { key:'diver', name:'プロダイバー', role:'観光客ガイド', secret:'違法サルベージを咎められていた', hint:'海から静かに接近できるが上陸時の物音に注意' },
-          { key:'chef', name:'シェフ', role:'ホテル勤務', secret:'未払い続きで不満', hint:'キッチンの刃物は持出管理されている' },
-          { key:'guest1', name:'小説家', role:'宿泊客', secret:'事件小説の取材を拒否された', hint:'演出のため怪しい行動を取ることも' },
-          { key:'manager', name:'支配人', role:'ホテル管理', secret:'帳簿の不正を見つかり解雇通告', hint:'マスターキーを所持' },
-          { key:'tourist', name:'旅行ブロガー', role:'宿泊客', secret:'悪評記事を準備し対立', hint:'直前に口論の目撃あり' },
-          { key:'maid', name:'客室係', role:'清掃', secret:'客の高額品を盗んでしまった', hint:'夜間も廊下移動は可能だが足音が響く' },
-        ],
-        truth:{
-          summary:'犯人はプロダイバー。台風の闇に紛れ海からバルコニー侵入し刺殺。',
-          motive:'違法サルベージを守るための口封じ。',
-          method:'潜水→バルコニー侵入→刺殺→柄を拭取→海へ撤退',
-        }
-      }
-    };
-
-    async function loadScenarioFromUrl(url, fallback){
-      try{
-        const res = await fetch(url, {cache:'no-store'});
-        if(!res.ok) throw new Error('HTTP '+res.status);
-        const json = await res.json();
-        return json;
-      }catch(e){
-        console.warn('シナリオの取得に失敗しました。フォールバックを使用します。', e);
-        return structuredClone(fallback);
-      }
-    }
-
-    function setPhaseLabel(text){ phaseLabel.textContent = text }
+    let SCENARIO = null; // To be assigned after selection
 
     // ==============================
-    // アプリ状態
+    // Scenario Data
+    // ==============================
+    const SCENARIOS = {
+      honnoji: {
+        title: '本能寺の変 - 信長を殺したのは誰か',
+        image: 'http://googleusercontent.com/file_content/1', // 画像URLを追加
+        setting: { era:'安土桃山時代', place:'京都・本能寺', status:'天下統一を目前にした織田信長が家臣に裏切られ襲撃された。' },
+        victim: { name:'織田信長', cause:'不明（焼死体のため特定不能）', spot:'本能寺・本殿', time:'天正10年6月2日未明' },
+        culpritCharacterKey: 'mitsuhide',
+        evidences:[
+          {id:1, title:'愛宕百韻（あたごひゃくいん）', desc:'事件直前に光秀が催した連歌会。謀反の決意を詠んだと解釈できる句「時は今 あめが下しる 五月かな」がある。'},
+          {id:2, title:'堺の商人からの書状', desc:'家康宛ての書状。「信長様の身辺に危険が迫っている」と、事件を予見したかのような内容が記されている。'},
+          {id:3, title:'備中高松城からの密使の報告', desc:'秀吉の陣からの報告。「光秀謀反」の報せを受けた後の秀吉の行動が、あまりに迅速で用意周到であったと記されている。'},
+        ],
+        characters:[
+          { key:'mitsuhide', name:'明智光秀', role:'織田家重臣', secret:'信長から過酷な叱責や理不尽な領地替えの命令を受け、強い恨みを抱いていた。', hint:'備中高松城への出陣命令に背き、突如として軍を京都へ向けた。その決断の理由は？' },
+          { key:'hideyoshi', name:'羽柴（豊臣）秀吉', role:'織田家重臣', secret:'事件をまるで予見していたかのように、驚異的な速さで京へ引き返す「中国大返し」の準備を事前に整えていた。', hint:'事件の第一報を聞いた後の行動が迅速すぎる。本当に事件を知らなかったのか？' },
+          { key:'ieyasu', name:'徳川家康', role:'同盟者', secret:'信長の招待で堺に滞在中だったが、事件直後に伊賀越えという極めて危険なルートで領国へ逃れた。なぜ最短経路を知っていたのか。', hint:'堺の有力商人との繋がりが深く、独自の諜報網を持っていたとされる。' },
+        ],
+        truth:{
+          summary:'犯人は明智光秀。信長への積年の恨みから謀反を決意し、本能寺を襲撃したとされるのが通説。',
+          motive:'信長からのパワハラや、四国征伐を巡る対立による個人的な恨み、天下への野心など、諸説ある。',
+          method:'中国攻めの援軍と偽り1万3千の兵を率いて京に入り、油断していた信長が滞在する本能寺を急襲・放火した。',
+        }
+      },
+      rikyu: {
+        title: '千利休の切腹 - 利休を追い込んだ黒幕',
+        image: 'https://placehold.co/600x400/2E8B57/FFFFFF?text=%E5%8D%83%E5%88%A9%E4%BC%91', // Placeholder image
+        setting: { era:'安土桃山時代', place:'京都・聚楽第', status:'茶の湯を大成させた千利休が、天下人・秀吉の怒りを買い切腹を命じられた。' },
+        victim: { name:'千利休', cause:'切腹', spot:'自邸', time:'天正19年2月28日' },
+        culpritCharacterKey: 'hideyoshi',
+        evidences:[
+          {id:1, title:'大徳寺山門の木像', desc:'利休が自身の木像を山門に設置。これを見た秀吉が「利休が自分を見下している」と激怒したとされる。'},
+          {id:2, title:'茶器の売買記録', desc:'利休が斡旋した茶器が、法外な値段で取引されていたとされる帳簿。三成がこれを発見し、秀吉に報告したという。'},
+          {id:3, title:'前田利家からの手紙', desc:'利休の助命を嘆願する内容だが、「関白殿下（秀吉）の怒り尋常ならず」と書かれており、説得が不可能だったことを示唆している。'},
+        ],
+        characters:[
+          { key:'hideyoshi', name:'豊臣秀吉', role:'天下人（関白）', secret:'利休の影響力が茶の湯の世界に留まらず、政治的にも大きくなりすぎた。自身の権威を脅かす存在だと感じ、疎ましく思っている。', hint:'黄金を好み、派手な権威を示す自分に対し、わびさびを重んじる利休の価値観が気に食わない。' },
+          { key:'mitsunari', name:'石田三成', role:'秀吉の側近（五奉行）', secret:'利休の政治的な影響力を快く思っておらず、秀吉の側近としての自分の地位を脅かす存在だと考えている。利休の失脚を狙っていた。', hint:'利休が茶器を不当に高値で売買しているという噂を、秀吉の耳に入れたのは自分だ。' },
+          { key:'ieyasu', name:'徳川家康', role:'大名（五大老）', secret:'利休とは親交があったが、秀吉との決定的な対立を避けるため、表立って助けようとはしなかった。しかし裏では利休の弟子たちを保護している。', hint:'利休の死後、彼の「わび茶」の精神は家康の治世で再評価されることになる。今は耐える時だ。' },
+        ],
+        truth:{
+          summary:'黒幕は豊臣秀吉。自身の権威を脅かす存在となった利休を、様々な理由をこじつけて排除した。',
+          motive:'権力闘争。利休の審美眼や価値観が、秀吉の黄金の茶室に代表される価値観と対立し、その政治的な影響力も無視できなくなったため。',
+          method:'大徳寺山門の木像事件や茶器売買疑惑などを口実に、絶対的な権力で切腹を命じた。三成の讒言もその一助となった。',
+        }
+      },
+    };
+
+    // ==============================
+    // Game State
     // ==============================
     const state = {
       phase: 'pick',
       playerCount: 0,
-      players: [], // {id,name,charKey}
+      players: [], // {id, name, charKey}
       assignIdx: 0,
       voteIdx: 0,
       votes: [],
     };
 
     // ==============================
-    // 画面：シナリオ選択
+    // Utility Functions
     // ==============================
-    function renderScenarioPicker(){
-      state.phase = 'pick'; setPhaseLabel('シナリオ選択'); titleEl.textContent = 'シナリオ未選択';
-      screen.innerHTML = `
-        <div class="card">
-          <h2>シナリオを選択</h2>
-          <div class="row cols-2" style="margin-top:10px">
-            <div class="card" style="background:#333">
-              <h3>クリムゾン・マンション殺人事件</h3>
-              <p class="muted">嵐で孤立した山荘で起きた毒殺事件。</p>
-              <div style="display:flex; gap:8px; flex-wrap:wrap">
-                <button class="btn" id="pickCrimson">このシナリオを読み込む</button>
-              </div>
-            </div>
-            <div class="card" style="background:#333">
-              <h3>蒼き海の孤島殺人事件</h3>
-              <p class="muted">台風で孤立した南の島のホテルで刺殺事件。</p>
-              <div style="display:flex; gap:8px; flex-wrap:wrap">
-                <button class="btn" id="pickIsland">このシナリオを読み込む</button>
-              </div>
-            </div>
-          </div>
+    function setPhaseLabel(text) {
+      phaseLabel.textContent = text;
+    }
 
-          <div class="card" style="background:#333; margin-top:12px">
-            <h3>（任意）ローカルJSONを読み込む</h3>
-            <p class="muted">独自シナリオJSONを読み込んで遊べます。</p>
-            <input type="file" id="fileInput" accept="application/json" />
+    function openVeil(next) {
+      veil.classList.remove('hidden');
+      veil.classList.add('flex');
+      veilContinueBtn.onclick = () => {
+        veil.classList.add('hidden');
+        veil.classList.remove('flex');
+        next && next();
+      };
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+    
+    // ==============================
+    // Render Functions
+    // ==============================
+
+    // Screen: Scenario Picker
+    function renderScenarioPicker() {
+      state.phase = 'pick';
+      setPhaseLabel('シナリオ選択');
+      titleEl.textContent = 'シナリオ未選択';
+      screen.innerHTML = `
+        <div class="bg-gray-800/50 rounded-2xl p-6 shadow-lg border border-gray-700">
+          <h2 class="text-2xl font-bold text-yellow-300 mb-4">シナリオを選択</h2>
+          <p class="text-gray-400 mb-6">プレイしたい歴史シナリオを選んでください。（3人プレイ専用です）</p>
+          <div class="grid md:grid-cols-2 gap-6">
+            <!-- Honnoji Card -->
+            <div class="bg-gray-900/70 rounded-xl border border-red-800/50 hover:border-red-600 transition-all duration-300 flex flex-col overflow-hidden">
+              <img src="${SCENARIOS.honnoji.image}" alt="本能寺の変" class="w-full h-40 object-cover">
+              <div class="p-6 flex flex-col flex-grow">
+                <h3 class="text-xl font-bold text-red-400">本能寺の変</h3>
+                <p class="text-gray-400 mt-2 mb-4 flex-grow">王道のテーマ。織田信長は誰に殺されたか。</p>
+                <button class="w-full mt-auto bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105" id="pickHonnoji">このシナリオを読み込む</button>
+              </div>
+            </div>
+            <!-- Rikyu Card -->
+            <div class="bg-gray-900/70 rounded-xl border border-green-800/50 hover:border-green-600 transition-all duration-300 flex flex-col overflow-hidden">
+              <img src="${SCENARIOS.rikyu.image}" alt="千利休" class="w-full h-40 object-cover">
+              <div class="p-6 flex flex-col flex-grow">
+                <h3 class="text-xl font-bold text-green-400">千利休の切腹</h3>
+                <p class="text-gray-400 mt-2 mb-4 flex-grow">天下人の逆鱗に触れた真の理由とは。</p>
+                <button class="w-full mt-auto bg-green-800 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105" id="pickRikyu">このシナリオを読み込む</button>
+              </div>
+            </div>
           </div>
         </div>`;
 
-      $('#pickCrimson').onclick = async ()=>{
-        SCENARIO = await loadScenarioFromUrl(SCENARIO_FILES.crimson, FALLBACK.crimson);
+      $('#pickHonnoji').onclick = () => {
+        SCENARIO = SCENARIOS.honnoji;
         afterScenarioLoaded();
       };
-      $('#pickIsland').onclick = async ()=>{
-        SCENARIO = await loadScenarioFromUrl(SCENARIO_FILES.island, FALLBACK.island);
+      $('#pickRikyu').onclick = () => {
+        SCENARIO = SCENARIOS.rikyu;
         afterScenarioLoaded();
       };
-      $('#fileInput').addEventListener('change', async (e)=>{
-        const file = e.target.files?.[0]; if(!file) return;
-        try{
-          const text = await file.text();
-          SCENARIO = JSON.parse(text);
-          afterScenarioLoaded();
-        }catch(err){ alert('JSONの読み込みに失敗しました'); }
-      });
     }
 
-    function afterScenarioLoaded(){
-      titleEl.textContent = SCENARIO.title + '（オフライン簡易版）';
+    function afterScenarioLoaded() {
+      titleEl.textContent = SCENARIO.title;
       renderSetup();
     }
 
-    // ==============================
-    // 以降：元のゲーム進行ロジック
-    // ==============================
+    // Screen: Setup
+    function renderSetup() {
+      if (!SCENARIO) return renderScenarioPicker();
+      state.phase = 'setup';
+      setPhaseLabel('準備');
+      const characterCount = SCENARIO.characters.length;
 
-    function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a }
-
-    function renderSetup(){
-      if(!SCENARIO){ return renderScenarioPicker(); }
-      state.phase = 'setup'; setPhaseLabel('準備');
       screen.innerHTML = `
-        <div class="card">
-          <h2 style="margin-top:4px">ゲーム開始</h2>
-          <p class="muted">この簡易版は<b>1台の端末</b>を交代で操作して進行します。サーバ通信はありません。</p>
-          <div class="row cols-2" style="margin-top:14px">
-            <div class="card" style="background:#333">
-              <h3>プレイ人数を選択</h3>
-              <div style="display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 14px">
-                ${[4,5,6].map(n=>`<button class=\"btn\" data-n=\"${n}\">${n} 人</button>`).join('')}
-              </div>
+        <div class="bg-gray-800/50 rounded-2xl p-6 shadow-lg border border-gray-700">
+          <h2 class="text-2xl font-bold text-yellow-300 mb-2">ゲーム開始</h2>
+          <p class="text-gray-400 mb-6">この簡易版は<b>1台の端末</b>を交代で操作して進行します。</p>
+          <div class="grid md:grid-cols-2 gap-6">
+            <!-- Player Setup -->
+            <div class="bg-gray-900/70 p-6 rounded-xl border border-gray-700">
+              <h3 class="text-lg font-bold text-white">プレイ人数</h3>
+              <p class="text-gray-300 mb-4">このシナリオは <b>${characterCount}人</b> でプレイします。</p>
               <div id="names"></div>
             </div>
-            <div class="card" style="background:#333">
-              <h3>シナリオ概要</h3>
-              <p class="muted">${SCENARIO.setting.era}／${SCENARIO.setting.place}<br>${SCENARIO.setting.status}</p>
-              <ul class="list">
-                <li>被害者：${SCENARIO.victim.name}</li>
-                <li>死因：${SCENARIO.victim.cause}</li>
-                <li>発見場所：${SCENARIO.victim.spot}／発見時刻：${SCENARIO.victim.time}</li>
-                <li>凶器：${SCENARIO.victim.weapon}</li>
+            <!-- Scenario Overview -->
+            <div class="bg-gray-900/70 p-6 rounded-xl border border-gray-700">
+              <h3 class="text-lg font-bold text-white">シナリオ概要</h3>
+              <p class="text-gray-400 text-sm mt-2">${SCENARIO.setting.era}／${SCENARIO.setting.place}</p>
+              <p class="text-gray-300 mt-1">${SCENARIO.setting.status}</p>
+              <ul class="list-disc list-inside text-gray-300 mt-4 space-y-1">
+                <li><b>被害者：</b>${SCENARIO.victim.name}</li>
+                <li><b>死因：</b>${SCENARIO.victim.cause}</li>
+                <li><b>場所/日時：</b>${SCENARIO.victim.spot} / ${SCENARIO.victim.time}</li>
               </ul>
-              <p class="footer-note">※ 個人目標や密談は省略。全体議論のみのライト版です。</p>
             </div>
           </div>
         </div>`;
-
-      screen.querySelectorAll('button[data-n]').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          const n = parseInt(btn.dataset.n,10); state.playerCount = n;
-          const box = $('#names');
-          box.innerHTML = `<div style=\"margin-top:6px\">
-            <label class=\"muted\">プレイヤー名（空欄可。未入力は自動でP1..になります）</label>
-            <div class=\"row cols-2\" style=\"margin-top:8px\">${Array.from({length:n}).map((_,i)=>`
-              <input placeholder=\"プレイヤー${i+1}\" data-name-idx=\"${i}\" style=\"padding:10px;border-radius:10px;border:1px solid #555;background:#222;color:#fff\">`).join('')}</div>
-            <div style=\"display:flex; gap:10px; margin-top:16px\">
-              <button class=\"btn\" id=\"startAssign\">キャラクターを配役して開始</button>
-              <button class=\"btn secondary\" id=\"randNames\">名前を自動入力</button>
-              <button class=\"btn secondary\" id=\"changeScenario\">シナリオ変更</button>
-            </div>
-          </div>`;
-
-          $('#randNames').onclick = ()=>{
-            screen.querySelectorAll('[data-name-idx]').forEach((inp,i)=> inp.value = `プレイヤー${i+1}`);
-          };
-          $('#changeScenario').onclick = ()=>{ renderScenarioPicker(); };
-          $('#startAssign').onclick = ()=>{
-            const names = Array.from(screen.querySelectorAll('[data-name-idx]')).map((inp,i)=> inp.value.trim() || `プレイヤー${i+1}`);
-            const chars = shuffle(SCENARIO.characters).slice(0, n);
-            state.players = names.map((name,i)=> ({ id:i+1, name, charKey: chars[i].key }));
-            state.assignIdx = 0; state.votes = []; state.voteIdx = 0;
-            openVeil(()=> renderHandout());
-          };
-        });
-      });
-    }
-
-    function openVeil(next){ const v = $('#veil'); v.classList.add('active'); $('#veilContinue').onclick = ()=>{ v.classList.remove('active'); next && next(); }; }
-
-    function renderHandout(){
-      state.phase = 'handout'; setPhaseLabel('ハンドアウト配布');
-      const i = state.assignIdx; const player = state.players[i];
-      const char = SCENARIO.characters.find(c=>c.key===player.charKey);
-      screen.innerHTML = `
-        <div class="card">
-          <div class="pill">${i+1} / ${state.playerCount}</div>
-          <h2>${player.name} のハンドアウト</h2>
-          <div class="grid" style="margin-top:12px">
-            <div class="char">
-              <h3>${char.name}（${char.role}）</h3>
-              <p><b>あなたの秘密</b><br>${char.secret}</p>
-              <p class="muted">ヒント：${char.hint}</p>
-            </div>
-            <div class="evidence">
-              <h3>事件概要（共通）</h3>
-              <ul class="list">
-                <li>被害者：${SCENARIO.victim.name}</li>
-                <li>死因：${SCENARIO.victim.cause}</li>
-                <li>発見場所：${SCENARIO.victim.spot}（${SCENARIO.victim.time}）</li>
-                <li>凶器：${SCENARIO.victim.weapon}</li>
-              </ul>
-              <h4 style="margin-top:10px">初期証拠品</h4>
-              <ul class="list">${SCENARIO.evidences.map(e=>`<li><b>${e.title}</b>：${e.desc}</li>`).join('')}</ul>
-            </div>
-          </div>
-          <div style="display:flex; gap:10px; margin-top:16px; justify-content:flex-end">
-            ${i < state.playerCount-1 ? '<button class="btn" id="nextHandout">次の人へ</button>' : '<button class="btn" id="toOverview">全体共有へ</button>'}
-          </div>
-          <p class="footer-note">※ 受け渡し時は画面を隠してください（<span class="kbd">準備OK</span>）</p>
+      
+      state.playerCount = characterCount;
+      const namesBox = $('#names');
+      namesBox.innerHTML = `
+        <label class="text-sm text-gray-400 block mb-2">プレイヤー名（空欄可）</label>
+        <div class="space-y-3 mb-4">
+          ${Array.from({length: characterCount}).map((_, i) => `
+            <input placeholder="プレイヤー${i + 1}" data-name-idx="${i}" class="w-full bg-gray-800 border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400">
+          `).join('')}
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3 mt-4">
+          <button class="w-full bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-2 px-4 rounded-lg transition" id="startAssign">配役して開始</button>
+          <button class="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition" id="changeScenario">シナリオ変更</button>
         </div>`;
 
-      const next = (i < state.playerCount-1) ? ()=>{ state.assignIdx++; renderHandout(); } : renderOverview;
-      const btnId = (i < state.playerCount-1) ? '#nextHandout' : '#toOverview';
-      $(btnId).onclick = ()=> openVeil(next);
+      $('#changeScenario').onclick = () => renderScenarioPicker();
+      $('#startAssign').onclick = () => {
+        const names = Array.from(screen.querySelectorAll('[data-name-idx]')).map((inp, i) => inp.value.trim() || `プレイヤー${i + 1}`);
+        const chars = shuffle(SCENARIO.characters);
+        state.players = names.map((name, i) => ({ id: i + 1, name, charKey: chars[i].key }));
+        state.assignIdx = 0;
+        state.votes = [];
+        state.voteIdx = 0;
+        openVeil(() => renderHandout());
+      };
     }
 
-    function renderOverview(){
-      state.phase = 'overview'; setPhaseLabel('情報共有');
-      const assignedChars = state.players.map(p => SCENARIO.characters.find(c=>c.key===p.charKey));
+    // Screen: Handout
+    function renderHandout() {
+      state.phase = 'handout';
+      setPhaseLabel('ハンドアウト配布');
+      const i = state.assignIdx;
+      const player = state.players[i];
+      const char = SCENARIO.characters.find(c => c.key === player.charKey);
+
       screen.innerHTML = `
-        <div class="card">
-          <h2>全体共有</h2>
-          <div class="row cols-2" style="margin-top:8px">
-            <div class="card" style="background:#333">
-              <h3>登場キャラクター（今回の配役）</h3>
-              <ul class="list">${assignedChars.map(c=>`<li>${c.name}（${c.role}）</li>`).join('')}</ul>
+        <div class="bg-gray-800/50 rounded-2xl p-6 shadow-lg border border-gray-700 relative">
+          <div class="absolute top-4 right-4 bg-yellow-500 text-gray-900 text-xs font-bold px-3 py-1 rounded-full">${i + 1} / ${state.playerCount}</div>
+          <h2 class="text-2xl font-bold text-yellow-300 mb-4">${player.name} のハンドアウト</h2>
+          <div class="grid md:grid-cols-5 gap-6">
+            <!-- Character Info -->
+            <div class="md:col-span-2 bg-gray-900/70 p-5 rounded-xl border border-yellow-400/30">
+              <h3 class="text-xl font-bold text-yellow-300">あなたは【${char.name}】です</h3>
+              <p class="text-gray-400 mt-1"><b>役割：</b>${char.role}</p>
+              <p class="mt-4 text-gray-300"><b>あなたの秘密：</b><br>${char.secret}</p>
+              <p class="mt-4 text-sm text-yellow-400/80 bg-yellow-900/30 p-3 rounded-md"><b>ヒント：</b>${char.hint}</p>
             </div>
-            <div class="card" style="background:#333">
-              <h3>証拠品</h3>
-              <ul class="list">${SCENARIO.evidences.map(e=>`<li><b>${e.title}</b>：${e.desc}</li>`).join('')}</ul>
+            <!-- Case Info -->
+            <div class="md:col-span-3 bg-gray-900/70 p-5 rounded-xl border border-red-800/50">
+              <h3 class="text-xl font-bold text-red-400">事件概要（共通）</h3>
+              <ul class="list-disc list-inside text-gray-300 mt-3 space-y-1">
+                <li><b>被害者：</b>${SCENARIO.victim.name}</li>
+                <li><b>死因：</b>${SCENARIO.victim.cause}</li>
+                <li><b>場所/日時：</b>${SCENARIO.victim.spot}（${SCENARIO.victim.time}）</li>
+              </ul>
+              <h4 class="text-lg font-bold text-red-400 mt-5">初期証拠品</h4>
+              <ul class="list-disc list-inside text-gray-300 mt-3 space-y-2">${SCENARIO.evidences.map(e => `<li><b>${e.title}</b>：${e.desc}</li>`).join('')}</ul>
             </div>
           </div>
-          <div style="display:flex; gap:10px; margin-top:16px; justify-content:space-between; align-items:center">
-            <span class="muted">口頭でアリバイ・知っている情報を共有してください。</span>
-            <button class="btn" id="toDebate">議論開始</button>
+          <div class="flex justify-end mt-6">
+            ${i < state.playerCount - 1 ? '<button class="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-2 px-6 rounded-lg transition" id="nextHandout">次の人へ</button>' : '<button class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-lg transition" id="toOverview">全体共有へ</button>'}
+          </div>
+        </div>`;
+
+      const nextAction = (i < state.playerCount - 1) ? () => { state.assignIdx++; renderHandout(); } : renderOverview;
+      const btnId = (i < state.playerCount - 1) ? '#nextHandout' : '#toOverview';
+      $(btnId).onclick = () => openVeil(nextAction);
+    }
+
+    // Screen: Overview
+    function renderOverview() {
+      state.phase = 'overview';
+      setPhaseLabel('情報共有');
+      const assignedChars = state.players.map(p => SCENARIO.characters.find(c => c.key === p.charKey));
+      screen.innerHTML = `
+        <div class="bg-gray-800/50 rounded-2xl p-6 shadow-lg border border-gray-700">
+          <h2 class="text-2xl font-bold text-yellow-300 mb-4">全体共有</h2>
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="bg-gray-900/70 p-5 rounded-xl border border-gray-700">
+              <h3 class="text-lg font-bold text-white">登場人物（今回の配役）</h3>
+              <ul class="list-disc list-inside text-gray-300 mt-3 space-y-1">${assignedChars.map(c => `<li>${c.name}（${c.role}）</li>`).join('')}</ul>
+            </div>
+            <div class="bg-gray-900/70 p-5 rounded-xl border border-gray-700">
+              <h3 class="text-lg font-bold text-white">証拠品</h3>
+              <ul class="list-disc list-inside text-gray-300 mt-3 space-y-2">${SCENARIO.evidences.map(e => `<li><b>${e.title}</b>：${e.desc}</li>`).join('')}</ul>
+            </div>
+          </div>
+          <div class="flex justify-between items-center mt-6">
+            <span class="text-gray-400">口頭でアリバイや情報を共有してください。</span>
+            <button class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-lg transition" id="toDebate">議論開始</button>
           </div>
         </div>`;
       $('#toDebate').onclick = renderDebate;
     }
 
-    function renderDebate(){
-      state.phase = 'debate'; setPhaseLabel('議論');
-      screen.innerHTML = `
-        <div class="card">
-          <h2>議論フェーズ</h2>
-          <p class="muted">この簡易版ではチャットやメモ機能はありません。口頭で議論してください。</p>
-          <div class="row cols-2" style="margin-top:12px">
-            <div class="card" style="background:#333">
-              <h3>配役</h3>
-              <ul class="list">${state.players.map(p=>{ const c = SCENARIO.characters.find(cc=>cc.key===p.charKey); return `<li>${p.name}：${c.name}</li>` }).join('')}</ul>
+    // Screen: Debate
+    function renderDebate() {
+        state.phase = 'debate';
+        setPhaseLabel('議論');
+        screen.innerHTML = `
+        <div class="bg-gray-800/50 rounded-2xl p-6 shadow-lg border border-gray-700">
+            <h2 class="text-2xl font-bold text-yellow-300 mb-4">議論フェーズ</h2>
+            <p class="text-gray-400 mb-6">口頭で自由に議論し、犯人を見つけ出してください。</p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-gray-900/70 p-5 rounded-xl border border-gray-700">
+                    <h3 class="text-lg font-bold text-white">配役</h3>
+                    <ul class="list-disc list-inside text-gray-300 mt-3 space-y-1">${state.players.map(p => { const c = SCENARIO.characters.find(cc => cc.key === p.charKey); return `<li>${p.name}：<b>${c.name}</b></li>` }).join('')}</ul>
+                </div>
+                <div class="bg-gray-900/70 p-5 rounded-xl border border-gray-700">
+                    <h3 class="text-lg font-bold text-white">証拠品早見</h3>
+                    <ul class="list-disc list-inside text-gray-300 mt-3 space-y-2">${SCENARIO.evidences.map(e => `<li><b>${e.title}</b></li>`).join('')}</ul>
+                </div>
             </div>
-            <div class="card" style="background:#333">
-              <h3>証拠品早見</h3>
-              <ul class="list">${SCENARIO.evidences.map(e=>`<li><b>${e.title}</b>：${e.desc}</li>`).join('')}</ul>
+            <div class="flex justify-end mt-6">
+                <button class="bg-red-800 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition" id="toVote">投票へ</button>
             </div>
-          </div>
-          <div style="display:flex; gap:10px; margin-top:16px; justify-content:flex-end">
-            <button class="btn" id="toVote">投票へ</button>
-          </div>
         </div>`;
-      $('#toVote').onclick = ()=>{ state.voteIdx = 0; state.votes = []; openVeil(renderVote); };
+        $('#toVote').onclick = () => {
+            state.voteIdx = 0;
+            state.votes = [];
+            openVeil(renderVote);
+        };
     }
 
-    function renderVote(){
-      state.phase = 'vote'; setPhaseLabel('投票');
-      const i = state.voteIdx; const voter = state.players[i];
-      const assignedChars = state.players.map(p => SCENARIO.characters.find(c=>c.key===p.charKey));
+    // Screen: Vote
+    function renderVote() {
+      state.phase = 'vote';
+      setPhaseLabel('投票');
+      const i = state.voteIdx;
+      const voter = state.players[i];
+      
       screen.innerHTML = `
-        <div class="card">
-          <div class="pill">${i+1} / ${state.playerCount}</div>
-          <h2>${voter.name} の投票</h2>
-          <p>犯人だと思うキャラクターを選んでください。（自分以外）</p>
-          <div class="vote-grid" id="voteGrid">
-            ${state.players.map(p=>{ const c = assignedChars.find(ac=>ac.key===p.charKey); const dis = (p.id===voter.id)?'data-disabled=\'1\'':''; return `<button class=\"vote-btn\" data-target=\"${c.key}\" ${dis}><strong>${c.name}</strong><small>${p.name} の役</small></button>` }).join('')}
+        <div class="bg-gray-800/50 rounded-2xl p-6 shadow-lg border border-gray-700 relative">
+          <div class="absolute top-4 right-4 bg-yellow-500 text-gray-900 text-xs font-bold px-3 py-1 rounded-full">${i + 1} / ${state.playerCount}</div>
+          <h2 class="text-2xl font-bold text-yellow-300 mb-4">${voter.name} の投票</h2>
+          <p class="text-gray-400 mb-6">犯人だと思う人物を選んでください。（自分以外）</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="voteGrid">
+            ${state.players.map(p => {
+              const c = SCENARIO.characters.find(ac => ac.key === p.charKey);
+              const isDisabled = p.id === voter.id;
+              return `
+                <button class="text-left p-4 rounded-lg border-2 transition-all duration-200 ${isDisabled ? 'bg-gray-700/50 border-gray-600 opacity-50 cursor-not-allowed' : 'bg-gray-900/70 border-gray-700 hover:border-yellow-400 hover:bg-gray-800'}" data-target="${c.key}" ${isDisabled ? 'disabled' : ''}>
+                  <strong class="text-lg text-white">${c.name}</strong>
+                  <small class="block text-gray-400">${p.name} の役</small>
+                </button>`;
+            }).join('')}
           </div>
-          <div style="display:flex; gap:10px; margin-top:16px; justify-content:flex-end">
-            <button class="btn" id="confirmVote" disabled>投票する</button>
-          </div>
-          <p class="footer-note">※ 受け渡し時は画面を隠してください（<span class="kbd">準備OK</span>）</p>
-        </div>`;
-
-      let selected = null;
-      screen.querySelectorAll('.vote-btn').forEach(btn=>{
-        const isDis = btn.dataset.disabled==='1';
-        if(isDis){ btn.style.opacity=.5; btn.style.pointerEvents='none'; }
-        btn.addEventListener('click', ()=>{ if(isDis) return; screen.querySelectorAll('.vote-btn').forEach(b=> b.style.outline='none'); btn.style.outline='2px solid var(--gold)'; selected = btn.dataset.target; $('#confirmVote').disabled = false; });
-      });
-
-      $('#confirmVote').onclick = ()=>{
-        if(!selected) return; state.votes.push({ voterId: voter.id, targetCharKey: selected });
-        if(i < state.playerCount-1){ state.voteIdx++; openVeil(renderVote); } else { renderResult(); }
-      };
-    }
-
-    function renderResult(){
-      state.phase = 'result'; setPhaseLabel('結果');
-      const countMap = {}; const keyToDisp = {};
-      state.players.forEach(p=>{ const c = SCENARIO.characters.find(x=>x.key===p.charKey); keyToDisp[c.key] = {char:c, player:p}; });
-      for(const v of state.votes){ countMap[v.targetCharKey] = (countMap[v.targetCharKey]||0)+1; }
-      const rows = Object.keys(keyToDisp).map(k=>({ key:k, disp:keyToDisp[k], votes:countMap[k]||0 })).sort((a,b)=> b.votes-a.votes);
-      const topVotes = rows[0]?.votes || 0; const tops = rows.filter(r=> r.votes===topVotes); const mostKey = (tops.length===1)? tops[0].key : null;
-      const culpritKey = SCENARIO.culpritCharacterKey; const citizensWin = (mostKey && mostKey===culpritKey);
-
-      screen.innerHTML = `
-        <div class="card">
-          <h2>投票結果</h2>
-          <div style="margin:12px 0">
-            ${rows.map(r=>{ const cls = (r.key===mostKey)?'result-row winner':'result-row'; return `<div class=\"${cls}\"><div style=\"min-width:150px\"><b>${r.disp.char.name}</b><br><span class=\"muted\">(${r.disp.player.name})</span></div><div class=\"bar\" style=\"flex:1\"><div class=\"fill\" style=\"width:${(r.votes/state.playerCount)*100}%\"></div></div><div style=\"min-width:60px; text-align:right\"><b>${r.votes}</b> 票</div></div>` }).join('')}
-          </div>
-          <div class="card" style="background:#333; margin-top:14px">
-            <h3>勝敗</h3>
-            ${mostKey ? `<p>最多票：<b>${keyToDisp[mostKey].char.name}</b></p><p>${citizensWin ? '市民チームの勝利！真犯人を特定しました。' : '犯人の勝利！投票で逃げ切りました。'}</p>` : `<p>同票により犯人不在。<b>犯人の勝利！</b></p>`}
-          </div>
-          <div class="card" style="background:#333; margin-top:14px">
-            <h3>真相</h3>
-            <p><b>真犯人：</b>${SCENARIO.characters.find(c=>c.key===culpritKey).name}</p>
-            <p><b>動機：</b>${SCENARIO.truth.motive}</p>
-            <p><b>犯行方法：</b>${SCENARIO.truth.method}</p>
-            <p class="muted">要約：${SCENARIO.truth.summary}</p>
-          </div>
-          <div style="display:flex; gap:10px; margin-top:16px; justify-content:space-between; align-items:center">
-            <span class="muted">別シナリオで遊ぶには、シナリオ選択に戻ってください。</span>
-            <div>
-              <button class="btn secondary" id="backToPick">シナリオ選択へ</button>
-              <button class="btn" id="restart">同じシナリオで最初から</button>
-            </div>
-          </div>
-        </div>`;
-      $('#restart').onclick = renderSetup; $('#backToPick').onclick = renderScenarioPicker;
-    }
-
-    // 起動
-    renderScenarioPicker();
-  </script>
-
-  <!--
-  =============================================
-  置き場所とファイル内容の例（このHTMLとは別ファイル）
-  ---------------------------------------------
-  /scenarios/crimson.json
-  {
-    "title": "クリムゾン・マンション殺人事件",
-    "setting": {"era":"現代","place":"山奥の豪華別荘『クリムゾン・マンション』","status":"嵐で孤立した別荘で殺人事件が発生"},
-    "victim": {"name":"富豪の父親（別荘の主人）","cause":"毒殺","spot":"書斎","time":"夜10時頃","weapon":"毒入りのブランデー"},
-    "culpritCharacterKey":"chef",
-    "evidences":[
-      {"id":1,"title":"毒入りブランデーグラス","desc":"被害者の机上で発見。被害者の指紋のみ。"},
-      {"id":2,"title":"破かれた遺言書の断片","desc":"暖炉付近で見つかる。遺言内容は不明。"},
-      {"id":3,"title":"薬品の空き瓶","desc":"倉庫で発見。強い苦味の薬品の痕跡。"}
-    ],
-    "characters":[
-      {"key":"heir","name":"富豪の息子","role":"大学生","secret":"遺産の前借りを父に断られた。夜10時前に書斎付近にいた。","hint":"被害者は晩酌のブランデーにこだわっていた。"},
-      {"key":"secretary","name":"秘書","role":"被害者の右腕","secret":"重要な機密を握り遺言案に異議を唱えていた。","hint":"金庫の番号は被害者の誕生日と関連。"},
-      {"key":"chef","name":"料理人","role":"ベテラン","secret":"家族の医療費で借金。倉庫の棚を整理していた。","hint":"倉庫に強い苦味の薬品がある。"},
-      {"key":"doctor","name":"医師","role":"家族の友人","secret":"投資で損し借金。苦味の強い処方薬がある。","hint":"砂糖で苦味をごまかすのは難しい。"},
-      {"key":"lawyer","name":"弁護士","role":"遺言関与","secret":"最新案のコピーを紛失。","hint":"最新案では配分が大きく変更されていた。"},
-      {"key":"gardener","name":"庭師","role":"長年仕える","secret":"理不尽に叱責された過去。温室にいたと主張。","hint":"温室と書斎は屋外経由で短時間移動可能。"}
-    ],
-    "truth": {"summary":"犯人は料理人。倉庫の薬品をブランデーに混入し香りで苦味をごまかした。","motive":"家族の医療費で逼迫し援助を断られた。","method":"薬品を微量混入→ブランデーで覆い→書斎のグラスで飲ませた"}
-  }
-
-  /scenarios/island.json
-  {
-    "title":"蒼き海の孤島殺人事件",
-    "setting": {"era":"現代","place":"南洋の孤島リゾートホテル","status":"大型台風で島が孤立"},
-    "victim": {"name":"ホテルのオーナー","cause":"刺殺","spot":"オーナースイート","time":"深夜0時頃","weapon":"銀製のナイフ"},
-    "culpritCharacterKey":"diver",
-    "evidences":[
-      {"id":1,"title":"血のついたナイフ","desc":"胸に刺さったまま。指紋は拭き取り済み。"},
-      {"id":2,"title":"破れた航海日誌","desc":"港の倉庫で発見。数ページ欠落。"},
-      {"id":3,"title":"濡れた潜水服","desc":"深夜に使用された痕跡。まだ湿っている。"}
-    ],
-    "characters":[
-      {"key":"diver","name":"プロダイバー","role":"観光客ガイド","secret":"違法サルベージを咎められていた","hint":"海から静かに接近できるが上陸時の物音に注意"},
-      {"key":"chef","name":"シェフ","role":"ホテル勤務","secret":"未払い続きで不満","hint":"キッチンの刃物は持出管理されている"},
-      {"key":"guest1","name":"小説家","role":"宿泊客","secret":"事件小説の取材を拒否された","hint":"演出のため怪しい行動を取ることも"},
-      {"key":"manager","name":"支配人","role":"ホテル管理","secret":"帳簿の不正を見つかり解雇通告","hint":"マスターキーを所持"},
-      {"key":"tourist","name":"旅行ブロガー","role":"宿泊客","secret":"悪評記事を準備し対立","hint":"直前に口論の目撃あり"},
-      {"key":"maid","name":"客室係","role":"清掃","secret":"客の高額品を盗んでしまった","hint":"夜間も廊下移動は可能だが足音が響く"}
-    ],
-    "truth": {"summary":"犯人はプロダイバー。台風の闇に紛れ海からバルコニー侵入し刺殺。","motive":"違法サルベージを守るための口封じ。","method":"潜水→バルコニー侵入→刺殺→柄を拭取→海へ撤退"}
-  }
-  =============================================
-  -->
-</body>
-</html><!doctype html>
-<html lang="ja">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>マーダーミステリー（オフライン簡易版）</title>
-  <style>
-    :root{
-      --red:#8B0000; /* ダークレッド */
-      --gold:#FFD700; /* ゴールド */
-      --bg:#2C2C2C;   /* ダークグレー */
-      --text:#FFFFFF; /* ホワイト */
-      --muted:#999;
-      --card:#3a3a3a;
-      --accent:#b22222;
-    }
-    html,body{height:100%}
-    body{ margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP"; background:linear-gradient(180deg,#1e1e1e,var(--bg)); color:var(--text) }
-    header{ display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--red); border-bottom:1px solid #000; position:sticky; top:0; z-index:3 }
-    header h1{ font-size:16px; margin:0; letter-spacing:.02em }
-    header .phase{ font-weight:700 }
-    main{ max-width:980px; margin:24px auto; padding:0 16px }
-    .card{ background:var(--card); border:1px solid #000; border-radius:12px; padding:16px; box-shadow:0 6px 20px rgba(0,0,0,.35) }
-    .row{ display:grid; gap:16px }
-    .row.cols-2{ grid-template-columns: 1fr 1fr }
-    @media (max-width: 800px){ .row.cols-2{ grid-template-columns: 1fr } }
-    .btn{ appearance:none; border:0; padding:12px 16px; border-radius:10px; cursor:pointer; font-weight:700; color:#fff; background:var(--accent); box-shadow:0 6px 18px rgba(0,0,0,.35) }
-    .btn.secondary{ background:#444 }
-    .btn:disabled{ opacity:.6; cursor:not-allowed }
-    .btn:hover{ filter:brightness(1.08) }
-    .btn:active{ transform: translateY(1px) }
-    .bar{ height:10px; background:#444; border-radius:8px; overflow:hidden }
-    .fill{ height:100%; background:linear-gradient(90deg, var(--gold), #ff9f1a) }
-    .muted{ color:var(--muted) }
-    .list{ margin:8px 0 0 0; padding:0 0 0 18px }
-    .pill{ display:inline-block; padding:4px 10px; border-radius:999px; background:#4a4a4a; font-size:12px; margin-right:6px }
-    .grid{ display:grid; grid-template-columns: 1fr 2fr; gap:20px }
-    @media (max-width: 860px){ .grid{ grid-template-columns: 1fr } }
-    .char{ border-left:4px solid var(--gold); padding-left:12px }
-    .evidence{ border-left:4px solid var(--red); padding-left:12px }
-    .veil{ position:fixed; inset:0; background:#111; display:none; align-items:center; justify-content:center; z-index:9999 }
-    .veil.active{ display:flex }
-    .veil .panel{ background:#181818; border:1px solid #000; border-radius:16px; padding:24px; max-width:520px; text-align:center }
-    .vote-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:12px }
-    .vote-btn{ background:#4b1b1b; border:1px solid #5d2222; padding:14px; border-radius:12px; cursor:pointer; text-align:left }
-    .vote-btn:hover{ filter:brightness(1.1) }
-    .vote-btn small{ display:block; color:#ccc }
-    .result-row{ display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:10px; background:#393939; margin-bottom:8px }
-    .result-row.winner{ outline:2px solid var(--gold) }
-    .footer-note{ font-size:12px; color:#bbb; margin-top:8px }
-    .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace; background:#000; color:#fff; padding:2px 6px; border-radius:6px; border:1px solid #444 }
-  </style>
-</head>
-<body>
-  <header>
-    <h1 id="title">シナリオ未選択</h1>
-    <div class="phase" id="phaseLabel">シナリオ選択</div>
-  </header>
-  <main>
-    <div id="screen"></div>
-  </main>
-
-  <div class="veil" id="veil">
-    <div class="panel">
-      <h2>画面を隠して端末を渡してください</h2>
-      <p class="muted">次のプレイヤーが準備できたら、下のボタンを押してください。</p>
-      <button class="btn" id="veilContinue">準備OK</button>
-    </div>
-  </div>
-
-  <script>
-    // ==============================
-    // シナリオ ローダ
-    // ==============================
-    const titleEl = document.getElementById('title');
-    const phaseLabel = document.getElementById('phaseLabel');
-    const screen = document.getElementById('screen');
-    const $ = (sel) => document.querySelector(sel);
-
-    let SCENARIO = null; // 選択後に代入
-
-    // 配布用想定: ./scenarios 以下にJSONを置く
-    //  - crimson.json（クリムゾン・マンション殺人事件）
-    //  - island.json（蒼き海の孤島殺人事件）
-    const SCENARIO_FILES = {
-      crimson: './scenarios/crimson.json',
-      island: './scenarios/island.json',
-    };
-
-    // file:// で開く場合のフェッチ失敗を考慮してフォールバックも用意
-    const FALLBACK = {
-      crimson: {
-        title: 'クリムゾン・マンション殺人事件',
-        setting: { era:'現代', place:'山奥の豪華別荘「クリムゾン・マンション」', status:'嵐で孤立した別荘で殺人事件が発生' },
-        victim: { name:'富豪の父親（別荘の主人）', cause:'毒殺', spot:'書斎', time:'夜10時頃', weapon:'毒入りのブランデー' },
-        culpritCharacterKey: 'chef',
-        evidences:[
-          {id:1, title:'毒入りブランデーグラス', desc:'被害者の机上で発見。被害者の指紋のみ。'},
-          {id:2, title:'破かれた遺言書の断片', desc:'暖炉付近で見つかる。遺言内容は不明。'},
-          {id:3, title:'薬品の空き瓶', desc:'倉庫で発見。強い苦味のある薬品の痕跡。'},
-        ],
-        characters:[
-          { key:'heir', name:'富豪の息子', role:'大学生', secret:'遺産の前借りを父に断られた。夜10時前に書斎付近にいた。', hint:'被害者は晩酌のブランデーにこだわっていた。' },
-          { key:'secretary', name:'秘書', role:'被害者の右腕', secret:'重要な機密を握り遺言案に異議を唱えていた。', hint:'金庫の番号は被害者の誕生日と関連。' },
-          { key:'chef', name:'料理人', role:'ベテラン', secret:'家族の医療費で借金。倉庫の棚を整理していた。', hint:'倉庫に強い苦味の薬品がある。' },
-          { key:'doctor', name:'医師', role:'家族の友人', secret:'投資で損し借金。苦味の強い処方薬がある。', hint:'砂糖で苦味をごまかすのは難しい。' },
-          { key:'lawyer', name:'弁護士', role:'遺言関与', secret:'最新案のコピーを紛失。', hint:'最新案では配分が大きく変更されていた。' },
-          { key:'gardener', name:'庭師', role:'長年仕える', secret:'理不尽に叱責された過去。温室にいたと主張。', hint:'温室と書斎は屋外経由で短時間移動可能。' },
-        ],
-        truth:{
-          summary:'犯人は料理人。倉庫の薬品をブランデーに混入し香りで苦味をごまかした。',
-          motive:'家族の医療費で逼迫し援助を断られた。',
-          method:'薬品を微量混入→ブランデーで覆い→書斎のグラスで飲ませた',
-        }
-      },
-      island: {
-        title: '蒼き海の孤島殺人事件',
-        setting: { era:'現代', place:'南洋の孤島リゾートホテル', status:'大型台風で島が孤立' },
-        victim: { name:'ホテルのオーナー', cause:'刺殺', spot:'オーナースイート', time:'深夜0時頃', weapon:'銀製のナイフ' },
-        culpritCharacterKey: 'diver',
-        evidences:[
-          {id:1, title:'血のついたナイフ', desc:'胸に刺さったまま。指紋は拭き取り済み。'},
-          {id:2, title:'破れた航海日誌', desc:'港の倉庫で発見。数ページ欠落。'},
-          {id:3, title:'濡れた潜水服', desc:'深夜に使用された痕跡。まだ湿っている。'},
-        ],
-        characters:[
-          { key:'diver', name:'プロダイバー', role:'観光客ガイド', secret:'違法サルベージを咎められていた', hint:'海から静かに接近できるが上陸時の物音に注意' },
-          { key:'chef', name:'シェフ', role:'ホテル勤務', secret:'未払い続きで不満', hint:'キッチンの刃物は持出管理されている' },
-          { key:'guest1', name:'小説家', role:'宿泊客', secret:'事件小説の取材を拒否された', hint:'演出のため怪しい行動を取ることも' },
-          { key:'manager', name:'支配人', role:'ホテル管理', secret:'帳簿の不正を見つかり解雇通告', hint:'マスターキーを所持' },
-          { key:'tourist', name:'旅行ブロガー', role:'宿泊客', secret:'悪評記事を準備し対立', hint:'直前に口論の目撃あり' },
-          { key:'maid', name:'客室係', role:'清掃', secret:'客の高額品を盗んでしまった', hint:'夜間も廊下移動は可能だが足音が響く' },
-        ],
-        truth:{
-          summary:'犯人はプロダイバー。台風の闇に紛れ海からバルコニー侵入し刺殺。',
-          motive:'違法サルベージを守るための口封じ。',
-          method:'潜水→バルコニー侵入→刺殺→柄を拭取→海へ撤退',
-        }
-      }
-    };
-
-    async function loadScenarioFromUrl(url, fallback){
-      try{
-        const res = await fetch(url, {cache:'no-store'});
-        if(!res.ok) throw new Error('HTTP '+res.status);
-        const json = await res.json();
-        return json;
-      }catch(e){
-        console.warn('シナリオの取得に失敗しました。フォールバックを使用します。', e);
-        return structuredClone(fallback);
-      }
-    }
-
-    function setPhaseLabel(text){ phaseLabel.textContent = text }
-
-    // ==============================
-    // アプリ状態
-    // ==============================
-    const state = {
-      phase: 'pick',
-      playerCount: 0,
-      players: [], // {id,name,charKey}
-      assignIdx: 0,
-      voteIdx: 0,
-      votes: [],
-    };
-
-    // ==============================
-    // 画面：シナリオ選択
-    // ==============================
-    function renderScenarioPicker(){
-      state.phase = 'pick'; setPhaseLabel('シナリオ選択'); titleEl.textContent = 'シナリオ未選択';
-      screen.innerHTML = `
-        <div class="card">
-          <h2>シナリオを選択</h2>
-          <div class="row cols-2" style="margin-top:10px">
-            <div class="card" style="background:#333">
-              <h3>クリムゾン・マンション殺人事件</h3>
-              <p class="muted">嵐で孤立した山荘で起きた毒殺事件。</p>
-              <div style="display:flex; gap:8px; flex-wrap:wrap">
-                <button class="btn" id="pickCrimson">このシナリオを読み込む</button>
-              </div>
-            </div>
-            <div class="card" style="background:#333">
-              <h3>蒼き海の孤島殺人事件</h3>
-              <p class="muted">台風で孤立した南の島のホテルで刺殺事件。</p>
-              <div style="display:flex; gap:8px; flex-wrap:wrap">
-                <button class="btn" id="pickIsland">このシナリオを読み込む</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="card" style="background:#333; margin-top:12px">
-            <h3>（任意）ローカルJSONを読み込む</h3>
-            <p class="muted">独自シナリオJSONを読み込んで遊べます。</p>
-            <input type="file" id="fileInput" accept="application/json" />
+          <div class="flex justify-end mt-6">
+            <button class="bg-gray-600 text-white font-bold py-2 px-6 rounded-lg cursor-not-allowed" id="confirmVote" disabled>投票する</button>
           </div>
         </div>`;
 
-      $('#pickCrimson').onclick = async ()=>{
-        SCENARIO = await loadScenarioFromUrl(SCENARIO_FILES.crimson, FALLBACK.crimson);
-        afterScenarioLoaded();
-      };
-      $('#pickIsland').onclick = async ()=>{
-        SCENARIO = await loadScenarioFromUrl(SCENARIO_FILES.island, FALLBACK.island);
-        afterScenarioLoaded();
-      };
-      $('#fileInput').addEventListener('change', async (e)=>{
-        const file = e.target.files?.[0]; if(!file) return;
-        try{
-          const text = await file.text();
-          SCENARIO = JSON.parse(text);
-          afterScenarioLoaded();
-        }catch(err){ alert('JSONの読み込みに失敗しました'); }
-      });
-    }
-
-    function afterScenarioLoaded(){
-      titleEl.textContent = SCENARIO.title + '（オフライン簡易版）';
-      renderSetup();
-    }
-
-    // ==============================
-    // 以降：元のゲーム進行ロジック
-    // ==============================
-
-    function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a }
-
-    function renderSetup(){
-      if(!SCENARIO){ return renderScenarioPicker(); }
-      state.phase = 'setup'; setPhaseLabel('準備');
-      screen.innerHTML = `
-        <div class="card">
-          <h2 style="margin-top:4px">ゲーム開始</h2>
-          <p class="muted">この簡易版は<b>1台の端末</b>を交代で操作して進行します。サーバ通信はありません。</p>
-          <div class="row cols-2" style="margin-top:14px">
-            <div class="card" style="background:#333">
-              <h3>プレイ人数を選択</h3>
-              <div style="display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 14px">
-                ${[4,5,6].map(n=>`<button class=\"btn\" data-n=\"${n}\">${n} 人</button>`).join('')}
-              </div>
-              <div id="names"></div>
-            </div>
-            <div class="card" style="background:#333">
-              <h3>シナリオ概要</h3>
-              <p class="muted">${SCENARIO.setting.era}／${SCENARIO.setting.place}<br>${SCENARIO.setting.status}</p>
-              <ul class="list">
-                <li>被害者：${SCENARIO.victim.name}</li>
-                <li>死因：${SCENARIO.victim.cause}</li>
-                <li>発見場所：${SCENARIO.victim.spot}／発見時刻：${SCENARIO.victim.time}</li>
-                <li>凶器：${SCENARIO.victim.weapon}</li>
-              </ul>
-              <p class="footer-note">※ 個人目標や密談は省略。全体議論のみのライト版です。</p>
-            </div>
-          </div>
-        </div>`;
-
-      screen.querySelectorAll('button[data-n]').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          const n = parseInt(btn.dataset.n,10); state.playerCount = n;
-          const box = $('#names');
-          box.innerHTML = `<div style=\"margin-top:6px\">
-            <label class=\"muted\">プレイヤー名（空欄可。未入力は自動でP1..になります）</label>
-            <div class=\"row cols-2\" style=\"margin-top:8px\">${Array.from({length:n}).map((_,i)=>`
-              <input placeholder=\"プレイヤー${i+1}\" data-name-idx=\"${i}\" style=\"padding:10px;border-radius:10px;border:1px solid #555;background:#222;color:#fff\">`).join('')}</div>
-            <div style=\"display:flex; gap:10px; margin-top:16px\">
-              <button class=\"btn\" id=\"startAssign\">キャラクターを配役して開始</button>
-              <button class=\"btn secondary\" id=\"randNames\">名前を自動入力</button>
-              <button class=\"btn secondary\" id=\"changeScenario\">シナリオ変更</button>
-            </div>
-          </div>`;
-
-          $('#randNames').onclick = ()=>{
-            screen.querySelectorAll('[data-name-idx]').forEach((inp,i)=> inp.value = `プレイヤー${i+1}`);
-          };
-          $('#changeScenario').onclick = ()=>{ renderScenarioPicker(); };
-          $('#startAssign').onclick = ()=>{
-            const names = Array.from(screen.querySelectorAll('[data-name-idx]')).map((inp,i)=> inp.value.trim() || `プレイヤー${i+1}`);
-            const chars = shuffle(SCENARIO.characters).slice(0, n);
-            state.players = names.map((name,i)=> ({ id:i+1, name, charKey: chars[i].key }));
-            state.assignIdx = 0; state.votes = []; state.voteIdx = 0;
-            openVeil(()=> renderHandout());
-          };
+      let selectedTarget = null;
+      const confirmBtn = $('#confirmVote');
+      screen.querySelectorAll('#voteGrid button').forEach(btn => {
+        if (btn.disabled) return;
+        btn.addEventListener('click', () => {
+          screen.querySelectorAll('#voteGrid button').forEach(b => b.classList.remove('border-yellow-400', 'ring-2', 'ring-yellow-400'));
+          btn.classList.add('border-yellow-400', 'ring-2', 'ring-yellow-400');
+          selectedTarget = btn.dataset.target;
+          confirmBtn.disabled = false;
+          confirmBtn.classList.remove('bg-gray-600', 'cursor-not-allowed');
+          confirmBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-400', 'text-gray-900');
         });
       });
-    }
 
-    function openVeil(next){ const v = $('#veil'); v.classList.add('active'); $('#veilContinue').onclick = ()=>{ v.classList.remove('active'); next && next(); }; }
-
-    function renderHandout(){
-      state.phase = 'handout'; setPhaseLabel('ハンドアウト配布');
-      const i = state.assignIdx; const player = state.players[i];
-      const char = SCENARIO.characters.find(c=>c.key===player.charKey);
-      screen.innerHTML = `
-        <div class="card">
-          <div class="pill">${i+1} / ${state.playerCount}</div>
-          <h2>${player.name} のハンドアウト</h2>
-          <div class="grid" style="margin-top:12px">
-            <div class="char">
-              <h3>${char.name}（${char.role}）</h3>
-              <p><b>あなたの秘密</b><br>${char.secret}</p>
-              <p class="muted">ヒント：${char.hint}</p>
-            </div>
-            <div class="evidence">
-              <h3>事件概要（共通）</h3>
-              <ul class="list">
-                <li>被害者：${SCENARIO.victim.name}</li>
-                <li>死因：${SCENARIO.victim.cause}</li>
-                <li>発見場所：${SCENARIO.victim.spot}（${SCENARIO.victim.time}）</li>
-                <li>凶器：${SCENARIO.victim.weapon}</li>
-              </ul>
-              <h4 style="margin-top:10px">初期証拠品</h4>
-              <ul class="list">${SCENARIO.evidences.map(e=>`<li><b>${e.title}</b>：${e.desc}</li>`).join('')}</ul>
-            </div>
-          </div>
-          <div style="display:flex; gap:10px; margin-top:16px; justify-content:flex-end">
-            ${i < state.playerCount-1 ? '<button class="btn" id="nextHandout">次の人へ</button>' : '<button class="btn" id="toOverview">全体共有へ</button>'}
-          </div>
-          <p class="footer-note">※ 受け渡し時は画面を隠してください（<span class="kbd">準備OK</span>）</p>
-        </div>`;
-
-      const next = (i < state.playerCount-1) ? ()=>{ state.assignIdx++; renderHandout(); } : renderOverview;
-      const btnId = (i < state.playerCount-1) ? '#nextHandout' : '#toOverview';
-      $(btnId).onclick = ()=> openVeil(next);
-    }
-
-    function renderOverview(){
-      state.phase = 'overview'; setPhaseLabel('情報共有');
-      const assignedChars = state.players.map(p => SCENARIO.characters.find(c=>c.key===p.charKey));
-      screen.innerHTML = `
-        <div class="card">
-          <h2>全体共有</h2>
-          <div class="row cols-2" style="margin-top:8px">
-            <div class="card" style="background:#333">
-              <h3>登場キャラクター（今回の配役）</h3>
-              <ul class="list">${assignedChars.map(c=>`<li>${c.name}（${c.role}）</li>`).join('')}</ul>
-            </div>
-            <div class="card" style="background:#333">
-              <h3>証拠品</h3>
-              <ul class="list">${SCENARIO.evidences.map(e=>`<li><b>${e.title}</b>：${e.desc}</li>`).join('')}</ul>
-            </div>
-          </div>
-          <div style="display:flex; gap:10px; margin-top:16px; justify-content:space-between; align-items:center">
-            <span class="muted">口頭でアリバイ・知っている情報を共有してください。</span>
-            <button class="btn" id="toDebate">議論開始</button>
-          </div>
-        </div>`;
-      $('#toDebate').onclick = renderDebate;
-    }
-
-    function renderDebate(){
-      state.phase = 'debate'; setPhaseLabel('議論');
-      screen.innerHTML = `
-        <div class="card">
-          <h2>議論フェーズ</h2>
-          <p class="muted">この簡易版ではチャットやメモ機能はありません。口頭で議論してください。</p>
-          <div class="row cols-2" style="margin-top:12px">
-            <div class="card" style="background:#333">
-              <h3>配役</h3>
-              <ul class="list">${state.players.map(p=>{ const c = SCENARIO.characters.find(cc=>cc.key===p.charKey); return `<li>${p.name}：${c.name}</li>` }).join('')}</ul>
-            </div>
-            <div class="card" style="background:#333">
-              <h3>証拠品早見</h3>
-              <ul class="list">${SCENARIO.evidences.map(e=>`<li><b>${e.title}</b>：${e.desc}</li>`).join('')}</ul>
-            </div>
-          </div>
-          <div style="display:flex; gap:10px; margin-top:16px; justify-content:flex-end">
-            <button class="btn" id="toVote">投票へ</button>
-          </div>
-        </div>`;
-      $('#toVote').onclick = ()=>{ state.voteIdx = 0; state.votes = []; openVeil(renderVote); };
-    }
-
-    function renderVote(){
-      state.phase = 'vote'; setPhaseLabel('投票');
-      const i = state.voteIdx; const voter = state.players[i];
-      const assignedChars = state.players.map(p => SCENARIO.characters.find(c=>c.key===p.charKey));
-      screen.innerHTML = `
-        <div class="card">
-          <div class="pill">${i+1} / ${state.playerCount}</div>
-          <h2>${voter.name} の投票</h2>
-          <p>犯人だと思うキャラクターを選んでください。（自分以外）</p>
-          <div class="vote-grid" id="voteGrid">
-            ${state.players.map(p=>{ const c = assignedChars.find(ac=>ac.key===p.charKey); const dis = (p.id===voter.id)?'data-disabled=\'1\'':''; return `<button class=\"vote-btn\" data-target=\"${c.key}\" ${dis}><strong>${c.name}</strong><small>${p.name} の役</small></button>` }).join('')}
-          </div>
-          <div style="display:flex; gap:10px; margin-top:16px; justify-content:flex-end">
-            <button class="btn" id="confirmVote" disabled>投票する</button>
-          </div>
-          <p class="footer-note">※ 受け渡し時は画面を隠してください（<span class="kbd">準備OK</span>）</p>
-        </div>`;
-
-      let selected = null;
-      screen.querySelectorAll('.vote-btn').forEach(btn=>{
-        const isDis = btn.dataset.disabled==='1';
-        if(isDis){ btn.style.opacity=.5; btn.style.pointerEvents='none'; }
-        btn.addEventListener('click', ()=>{ if(isDis) return; screen.querySelectorAll('.vote-btn').forEach(b=> b.style.outline='none'); btn.style.outline='2px solid var(--gold)'; selected = btn.dataset.target; $('#confirmVote').disabled = false; });
-      });
-
-      $('#confirmVote').onclick = ()=>{
-        if(!selected) return; state.votes.push({ voterId: voter.id, targetCharKey: selected });
-        if(i < state.playerCount-1){ state.voteIdx++; openVeil(renderVote); } else { renderResult(); }
+      confirmBtn.onclick = () => {
+        if (!selectedTarget) return;
+        state.votes.push({ voterId: voter.id, targetCharKey: selectedTarget });
+        if (i < state.playerCount - 1) {
+          state.voteIdx++;
+          openVeil(renderVote);
+        } else {
+          renderResult();
+        }
       };
     }
 
-    function renderResult(){
-      state.phase = 'result'; setPhaseLabel('結果');
-      const countMap = {}; const keyToDisp = {};
-      state.players.forEach(p=>{ const c = SCENARIO.characters.find(x=>x.key===p.charKey); keyToDisp[c.key] = {char:c, player:p}; });
-      for(const v of state.votes){ countMap[v.targetCharKey] = (countMap[v.targetCharKey]||0)+1; }
-      const rows = Object.keys(keyToDisp).map(k=>({ key:k, disp:keyToDisp[k], votes:countMap[k]||0 })).sort((a,b)=> b.votes-a.votes);
-      const topVotes = rows[0]?.votes || 0; const tops = rows.filter(r=> r.votes===topVotes); const mostKey = (tops.length===1)? tops[0].key : null;
-      const culpritKey = SCENARIO.culpritCharacterKey; const citizensWin = (mostKey && mostKey===culpritKey);
+    // Screen: Result
+    function renderResult() {
+        state.phase = 'result';
+        setPhaseLabel('結果');
+        const countMap = {};
+        const keyToDisp = {};
+        state.players.forEach(p => {
+            const c = SCENARIO.characters.find(x => x.key === p.charKey);
+            keyToDisp[c.key] = { char: c, player: p };
+        });
 
-      screen.innerHTML = `
-        <div class="card">
-          <h2>投票結果</h2>
-          <div style="margin:12px 0">
-            ${rows.map(r=>{ const cls = (r.key===mostKey)?'result-row winner':'result-row'; return `<div class=\"${cls}\"><div style=\"min-width:150px\"><b>${r.disp.char.name}</b><br><span class=\"muted\">(${r.disp.player.name})</span></div><div class=\"bar\" style=\"flex:1\"><div class=\"fill\" style=\"width:${(r.votes/state.playerCount)*100}%\"></div></div><div style=\"min-width:60px; text-align:right\"><b>${r.votes}</b> 票</div></div>` }).join('')}
-          </div>
-          <div class="card" style="background:#333; margin-top:14px">
-            <h3>勝敗</h3>
-            ${mostKey ? `<p>最多票：<b>${keyToDisp[mostKey].char.name}</b></p><p>${citizensWin ? '市民チームの勝利！真犯人を特定しました。' : '犯人の勝利！投票で逃げ切りました。'}</p>` : `<p>同票により犯人不在。<b>犯人の勝利！</b></p>`}
-          </div>
-          <div class="card" style="background:#333; margin-top:14px">
-            <h3>真相</h3>
-            <p><b>真犯人：</b>${SCENARIO.characters.find(c=>c.key===culpritKey).name}</p>
-            <p><b>動機：</b>${SCENARIO.truth.motive}</p>
-            <p><b>犯行方法：</b>${SCENARIO.truth.method}</p>
-            <p class="muted">要約：${SCENARIO.truth.summary}</p>
-          </div>
-          <div style="display:flex; gap:10px; margin-top:16px; justify-content:space-between; align-items:center">
-            <span class="muted">別シナリオで遊ぶには、シナリオ選択に戻ってください。</span>
-            <div>
-              <button class="btn secondary" id="backToPick">シナリオ選択へ</button>
-              <button class="btn" id="restart">同じシナリオで最初から</button>
+        for (const v of state.votes) {
+            countMap[v.targetCharKey] = (countMap[v.targetCharKey] || 0) + 1;
+        }
+
+        const rows = Object.keys(keyToDisp).map(k => ({
+            key: k,
+            disp: keyToDisp[k],
+            votes: countMap[k] || 0
+        })).sort((a, b) => b.votes - a.votes);
+
+        const topVotes = rows[0]?.votes || 0;
+        const tops = rows.filter(r => r.votes === topVotes);
+        const mostVotedKey = (tops.length === 1) ? tops[0].key : null;
+        const culpritKey = SCENARIO.culpritCharacterKey;
+        const citizensWin = (mostVotedKey && mostVotedKey === culpritKey);
+        
+        let winnerText;
+        if (mostVotedKey) {
+            winnerText = citizensWin 
+                ? '<span class="text-green-400">【市民チームの勝利】</span>真犯人（黒幕）を特定しました。' 
+                : '<span class="text-red-400">【犯人チームの勝利】</span>投票で逃げ切りました。';
+        } else {
+            winnerText = '<span class="text-red-400">【犯人チームの勝利】</span>同票により犯人不在となりました。';
+        }
+
+        screen.innerHTML = `
+        <div class="bg-gray-800/50 rounded-2xl p-6 shadow-lg border border-gray-700">
+            <h2 class="text-3xl font-bold text-yellow-300 mb-6 text-center">投票結果</h2>
+            
+            <!-- Vote Results -->
+            <div class="space-y-3 mb-8">
+                ${rows.map(r => `
+                    <div class="bg-gray-900/70 p-3 rounded-lg flex items-center gap-4 ${r.key === mostVotedKey ? 'ring-2 ring-yellow-400' : ''}">
+                        <div class="w-1/3">
+                            <b class="text-white">${r.disp.char.name}</b>
+                            <span class="text-xs text-gray-400 block">(${r.disp.player.name})</span>
+                        </div>
+                        <div class="w-2/3 flex items-center gap-4">
+                            <div class="w-full bg-gray-700 rounded-full h-2.5">
+                                <div class="bg-yellow-400 h-2.5 rounded-full" style="width: ${(r.votes / state.playerCount) * 100}%"></div>
+                            </div>
+                            <b class="text-lg text-white">${r.votes} 票</b>
+                        </div>
+                    </div>
+                `).join('')}
             </div>
-          </div>
+
+            <!-- Winner/Loser -->
+            <div class="bg-gray-900/70 p-5 rounded-xl border border-gray-700 text-center mb-6">
+                <h3 class="text-xl font-bold text-white mb-2">勝敗</h3>
+                <p class="text-lg">${winnerText}</p>
+            </div>
+
+            <!-- Truth -->
+            <div class="bg-gray-900/70 p-5 rounded-xl border border-gray-700">
+                <h3 class="text-xl font-bold text-white mb-3">真相</h3>
+                <p class="text-gray-300"><b>真犯人（黒幕）：</b> ${SCENARIO.characters.find(c => c.key === culpritKey).name}</p>
+                <p class="mt-2 text-gray-300"><b>動機：</b> ${SCENARIO.truth.motive}</p>
+                <p class="mt-2 text-gray-300"><b>犯行方法：</b> ${SCENARIO.truth.method}</p>
+                <p class="mt-3 text-sm text-gray-400 bg-gray-800 p-3 rounded-md"><b>要約：</b> ${SCENARIO.truth.summary}</p>
+            </div>
+
+            <!-- Restart -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+                <button class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg transition" id="backToPick">シナリオ選択へ</button>
+                <button class="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-2 px-6 rounded-lg transition" id="restart">同じシナリオで遊ぶ</button>
+            </div>
         </div>`;
-      $('#restart').onclick = renderSetup; $('#backToPick').onclick = renderScenarioPicker;
+        
+        $('#restart').onclick = renderSetup;
+        $('#backToPick').onclick = renderScenarioPicker;
     }
 
-    // 起動
+
+    // Initial boot
     renderScenarioPicker();
   </script>
 </body>
