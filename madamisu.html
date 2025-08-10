@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>マーダーミステリー - クリムゾン・マンション事件</title>
+    <title>クリムゾン・マンション殺人事件</title>
     <style>
         * {
             margin: 0;
@@ -12,674 +12,1072 @@
         }
 
         body {
-            font-family: 'Georgia', serif;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d1810 100%);
-            color: #f0f0f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a0000 0%, #2c0000 50%, #000000 100%);
+            color: #ffffff;
             min-height: 100vh;
             overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(139, 0, 0, 0.3);
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            color: #FFD700;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-            margin-bottom: 10px;
-        }
-
-        .game-status {
+        /* ローディング画面 */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
-            background: rgba(0, 0, 0, 0.4);
-            padding: 15px;
+            z-index: 9999;
+            transition: opacity 0.5s;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid #8B0000;
+            border-top: 3px solid #FFD700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* メインメニュー */
+        .main-menu {
+            display: none;
+            min-height: 100vh;
+            padding: 40px;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .title-container {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .game-title {
+            font-size: 3.5em;
+            color: #8B0000;
+            text-shadow: 0 0 30px rgba(139, 0, 0, 0.8), 
+                         0 0 60px rgba(139, 0, 0, 0.4),
+                         2px 2px 4px rgba(0, 0, 0, 0.8);
+            margin-bottom: 10px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .menu-button {
+            width: 100%;
+            padding: 18px 40px;
+            font-size: 1.2em;
+            background: linear-gradient(135deg, #8B0000, #650000);
+            color: #FFD700;
+            border: 2px solid #FFD700;
             border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(139, 0, 0, 0.5);
+        }
+
+        .menu-button:hover {
+            background: linear-gradient(135deg, #A00000, #750000);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        /* ルーム作成/参加画面 */
+        .room-screen {
+            display: none;
+            padding: 40px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .back-button {
+            padding: 10px 20px;
+            background: #2C2C2C;
+            color: #FFD700;
+            border: 1px solid #FFD700;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+        }
+
+        .back-button:hover {
+            background: #3C3C3C;
+        }
+
+        .room-form {
+            background: rgba(44, 44, 44, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #8B0000;
+            box-shadow: 0 0 30px rgba(139, 0, 0, 0.3);
+        }
+
+        .form-group {
             margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #FFD700;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: #1a1a1a;
+            border: 1px solid #8B0000;
+            border-radius: 5px;
+            color: #ffffff;
+            font-size: 1em;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        /* ゲーム画面 */
+        .game-screen {
+            display: none;
+            height: 100vh;
+            display: grid;
+            grid-template-rows: 60px 1fr 200px;
+        }
+
+        .game-header {
+            background: linear-gradient(90deg, #2C2C2C, #1a1a1a);
+            border-bottom: 2px solid #8B0000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .phase-display {
+            font-size: 1.2em;
+            color: #FFD700;
+            font-weight: bold;
         }
 
         .timer {
             font-size: 1.5em;
-            color: #ff6b6b;
-            font-weight: bold;
+            color: #ff4444;
+            font-family: 'Courier New', monospace;
+            background: #000;
+            padding: 5px 15px;
+            border-radius: 5px;
+            border: 1px solid #8B0000;
         }
 
-        .phase {
-            font-size: 1.2em;
-            color: #FFD700;
-        }
-
-        .main-content {
+        .game-main {
             display: grid;
-            grid-template-columns: 1fr 2fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+            grid-template-columns: 200px 1fr 300px;
+            overflow: hidden;
         }
 
-        .players-panel, .info-panel {
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 15px;
+        .players-panel {
+            background: rgba(44, 44, 44, 0.9);
+            border-right: 1px solid #8B0000;
             padding: 20px;
-            border: 2px solid #8B0000;
-        }
-
-        .center-panel {
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 15px;
-            padding: 20px;
-            border: 2px solid #8B0000;
+            overflow-y: auto;
         }
 
         .player-card {
             background: rgba(139, 0, 0, 0.2);
+            border: 1px solid #8B0000;
             border-radius: 10px;
             padding: 15px;
-            margin-bottom: 10px;
-            border: 1px solid #FFD700;
-            transition: all 0.3s ease;
+            margin-bottom: 15px;
             cursor: pointer;
+            transition: all 0.3s;
         }
 
         .player-card:hover {
             background: rgba(139, 0, 0, 0.4);
-            transform: translateY(-2px);
+            transform: translateX(5px);
         }
 
         .player-card.selected {
-            border-color: #ff6b6b;
-            background: rgba(255, 107, 107, 0.2);
+            border-color: #FFD700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
         }
 
-        .player-card.current-player {
-            border-color: #4ecdc4;
-            background: rgba(78, 205, 196, 0.2);
+        .player-avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #8B0000, #4a0000);
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            border: 2px solid #FFD700;
         }
 
         .player-name {
-            font-weight: bold;
+            text-align: center;
             color: #FFD700;
+            font-weight: bold;
             margin-bottom: 5px;
         }
 
         .player-role {
+            text-align: center;
+            color: #aaa;
             font-size: 0.9em;
-            color: #ccc;
         }
 
-        .chat-container {
-            height: 300px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            padding: 15px;
+        .chat-area {
+            background: rgba(26, 26, 26, 0.95);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #8B0000;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
             overflow-y: auto;
-            margin-bottom: 15px;
-            border: 1px solid #444;
         }
 
-        .chat-message {
-            margin-bottom: 10px;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(44, 44, 44, 0.8);
+            border-radius: 10px;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         .message-sender {
-            font-weight: bold;
             color: #FFD700;
-        }
-
-        .message-content {
-            margin-left: 10px;
-        }
-
-        .system-message {
-            background: rgba(78, 205, 196, 0.2);
-            border-left: 3px solid #4ecdc4;
-        }
-
-        .system-message .message-sender {
-            color: #4ecdc4;
-        }
-
-        .chat-input {
-            display: flex;
-            gap: 10px;
-        }
-
-        .chat-input input {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border: 1px solid #444;
-        }
-
-        .chat-input input::placeholder {
-            color: #aaa;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            background: linear-gradient(45deg, #8B0000, #CD5C5C);
-            color: #fff;
-        }
-
-        .btn:hover {
-            background: linear-gradient(45deg, #CD5C5C, #8B0000);
-            transform: translateY(-1px);
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, #FFD700, #FFA500);
-            color: #000;
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(45deg, #FFA500, #FFD700);
-        }
-
-        .character-info {
-            background: rgba(139, 0, 0, 0.2);
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid #FFD700;
-        }
-
-        .character-name {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #FFD700;
-            margin-bottom: 10px;
-        }
-
-        .character-details {
-            font-size: 0.9em;
-            line-height: 1.4;
-        }
-
-        .secret-info {
-            background: rgba(255, 107, 107, 0.2);
-            border: 1px solid #ff6b6b;
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 10px;
-        }
-
-        .secret-title {
-            color: #ff6b6b;
             font-weight: bold;
             margin-bottom: 5px;
         }
 
-        .evidence-list {
-            list-style: none;
+        .message-text {
+            color: #ffffff;
+            line-height: 1.4;
+        }
+
+        .system-message {
+            background: linear-gradient(135deg, rgba(139, 0, 0, 0.3), rgba(139, 0, 0, 0.1));
+            border-left: 3px solid #8B0000;
+            font-style: italic;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            border-top: 1px solid #8B0000;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            background: #2C2C2C;
+            border: 1px solid #8B0000;
+            border-radius: 5px;
+            color: #ffffff;
+            font-size: 1em;
+        }
+
+        .send-button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #8B0000, #650000);
+            color: #FFD700;
+            border: 1px solid #FFD700;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .send-button:hover {
+            background: linear-gradient(135deg, #A00000, #750000);
+        }
+
+        .info-panel {
+            background: rgba(44, 44, 44, 0.9);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 10px;
+            background: #2C2C2C;
+            color: #FFD700;
+            border: 1px solid #8B0000;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            background: #8B0000;
+            border-color: #FFD700;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
         }
 
         .evidence-item {
-            background: rgba(78, 205, 196, 0.2);
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 8px;
-            border-left: 3px solid #4ecdc4;
+            background: rgba(139, 0, 0, 0.2);
+            border: 1px solid #8B0000;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
         }
 
         .evidence-item:hover {
-            background: rgba(78, 205, 196, 0.3);
+            background: rgba(139, 0, 0, 0.4);
+            transform: scale(1.02);
         }
 
-        .voting-section {
-            background: rgba(255, 215, 0, 0.1);
-            border: 2px solid #FFD700;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-
-        .vote-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .vote-button {
-            padding: 15px;
-            background: rgba(139, 0, 0, 0.3);
-            border: 2px solid #8B0000;
-            border-radius: 8px;
-            color: #fff;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-        }
-
-        .vote-button:hover {
-            background: rgba(139, 0, 0, 0.5);
-            transform: scale(1.05);
-        }
-
-        .vote-button.selected {
-            background: rgba(255, 215, 0, 0.3);
-            border-color: #FFD700;
+        .evidence-title {
             color: #FFD700;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1em;
         }
 
+        .evidence-description {
+            color: #ccc;
+            line-height: 1.4;
+        }
+
+        .personal-info {
+            background: rgba(26, 26, 26, 0.9);
+            padding: 20px;
+            border-top: 2px solid #8B0000;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .handout-section, .notes-section {
+            background: rgba(44, 44, 44, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #8B0000;
+        }
+
+        .section-title {
+            color: #FFD700;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            border-bottom: 1px solid #8B0000;
+            padding-bottom: 5px;
+        }
+
+        .handout-content {
+            color: #ccc;
+            line-height: 1.5;
+        }
+
+        .notes-textarea {
+            width: 100%;
+            height: 100px;
+            background: #1a1a1a;
+            border: 1px solid #8B0000;
+            border-radius: 5px;
+            color: #ffffff;
+            padding: 10px;
+            resize: none;
+        }
+
+        /* 投票モーダル */
         .modal {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
             z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
         }
 
         .modal-content {
-            background: linear-gradient(135deg, #1a1a1a, #2d1810);
+            background: linear-gradient(135deg, #2C2C2C, #1a1a1a);
+            border: 2px solid #8B0000;
             border-radius: 15px;
             padding: 30px;
             max-width: 600px;
             width: 90%;
-            border: 3px solid #FFD700;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: modalSlide 0.3s;
         }
 
-        .modal h2 {
+        @keyframes modalSlide {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-title {
             color: #FFD700;
+            font-size: 1.8em;
             margin-bottom: 20px;
             text-align: center;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
         }
 
-        .close {
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            color: #aaa;
-        }
-
-        .close:hover {
-            color: #fff;
-        }
-
-        .setup-screen {
-            text-align: center;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .setup-screen h2 {
-            color: #FFD700;
-            margin-bottom: 20px;
-        }
-
-        .setup-screen input {
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: none;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            font-size: 1.1em;
-            border: 2px solid #444;
-        }
-
-        .setup-screen input::placeholder {
-            color: #aaa;
-        }
-
-        .character-selection {
+        .vote-options {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
-            margin: 20px 0;
+            margin-bottom: 20px;
         }
 
-        .character-option {
+        .vote-option {
+            padding: 15px;
             background: rgba(139, 0, 0, 0.2);
             border: 2px solid #8B0000;
             border-radius: 10px;
-            padding: 15px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
+            text-align: center;
         }
 
-        .character-option:hover {
+        .vote-option:hover {
             background: rgba(139, 0, 0, 0.4);
+            transform: scale(1.05);
+        }
+
+        .vote-option.selected {
+            border-color: #FFD700;
+            background: rgba(255, 215, 0, 0.2);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .vote-name {
+            color: #FFD700;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .vote-role {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .vote-submit {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #8B0000, #650000);
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .vote-submit:hover:not(:disabled) {
+            background: linear-gradient(135deg, #A00000, #750000);
             transform: translateY(-2px);
         }
 
-        .character-option.selected {
-            border-color: #FFD700;
-            background: rgba(255, 215, 0, 0.2);
+        .vote-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
+        /* 結果画面 */
+        .result-screen {
+            display: none;
+            padding: 40px;
+            text-align: center;
+            animation: fadeIn 1s;
+        }
+
+        .result-title {
+            font-size: 3em;
+            color: #FFD700;
+            margin-bottom: 30px;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+        }
+
+        .culprit-reveal {
+            background: rgba(139, 0, 0, 0.3);
+            border: 2px solid #FFD700;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            animation: revealAnimation 1s;
+        }
+
+        @keyframes revealAnimation {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .culprit-text {
+            font-size: 2em;
+            color: #8B0000;
+            margin-bottom: 10px;
+        }
+
+        .culprit-name {
+            font-size: 2.5em;
+            color: #FFD700;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .truth-section {
+            background: rgba(44, 44, 44, 0.9);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .truth-title {
+            color: #FFD700;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #8B0000;
+            padding-bottom: 10px;
+        }
+
+        .truth-content {
+            color: #ccc;
+            line-height: 1.8;
+            font-size: 1.1em;
+        }
+
+        .restart-button {
+            padding: 20px 60px;
+            background: linear-gradient(135deg, #8B0000, #650000);
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.3em;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .restart-button:hover {
+            background: linear-gradient(135deg, #A00000, #750000);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        /* レスポンシブデザイン */
         @media (max-width: 768px) {
-            .main-content {
+            .game-title {
+                font-size: 2em;
+            }
+
+            .game-main {
                 grid-template-columns: 1fr;
-                gap: 15px;
             }
-            
-            .game-status {
-                flex-direction: column;
-                gap: 10px;
+
+            .players-panel, .info-panel {
+                display: none;
             }
-            
-            .header h1 {
-                font-size: 1.8em;
+
+            .personal-info {
+                grid-template-columns: 1fr;
             }
-            
-            .chat-container {
-                height: 200px;
+
+            .vote-options {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- セットアップ画面 -->
-        <div id="setupScreen" class="setup-screen">
-            <div class="header">
-                <h1>🏚️ クリムゾン・マンション殺人事件 🔍</h1>
-                <p>山奥の豪華別荘で起きた謎の殺人事件...</p>
-            </div>
-            
-            <h2>プレイヤー名を入力してください</h2>
-            <input type="text" id="playerNameInput" placeholder="あなたの名前" maxlength="20">
-            
-            <h2>キャラクターを選択してください</h2>
-            <div class="character-selection" id="characterSelection">
-                <!-- キャラクター選択肢が動的に生成される -->
-            </div>
-            
-            <button class="btn btn-primary" onclick="startGame()">ゲーム開始</button>
+    <!-- ローディング画面 -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h2 style="color: #FFD700;">Loading...</h2>
         </div>
+    </div>
 
-        <!-- メインゲーム画面 -->
-        <div id="gameScreen" style="display: none;">
-            <div class="header">
-                <h1>🏚️ クリムゾン・マンション殺人事件 🔍</h1>
+    <!-- メインメニュー -->
+    <div class="main-menu" id="mainMenu">
+        <div class="title-container">
+            <h1 class="game-title">クリムゾン・マンション</h1>
+            <p class="subtitle">～嵐の夜の殺人事件～</p>
+        </div>
+        <div class="menu-buttons">
+            <button class="menu-button" onclick="showCreateRoom()">ルーム作成</button>
+            <button class="menu-button" onclick="showJoinRoom()">ルーム参加</button>
+            <button class="menu-button" onclick="showTutorial()">チュートリアル</button>
+            <button class="menu-button" onclick="showSettings()">設定</button>
+        </div>
+    </div>
+
+    <!-- ルーム作成画面 -->
+    <div class="room-screen" id="createRoomScreen">
+        <button class="back-button" onclick="backToMenu()">← 戻る</button>
+        <div class="room-form">
+            <h2 style="color: #FFD700; margin-bottom: 30px;">ルーム作成</h2>
+            <div class="form-group">
+                <label>ルーム名</label>
+                <input type="text" id="roomName" placeholder="例: 初心者歓迎ルーム" />
             </div>
-
-            <div class="game-status">
-                <div class="timer" id="timer">05:00</div>
-                <div class="phase" id="currentPhase">準備フェーズ</div>
-                <button class="btn" onclick="nextPhase()">次のフェーズ</button>
+            <div class="form-group">
+                <label>プレイヤー名</label>
+                <input type="text" id="hostName" placeholder="あなたの名前" />
             </div>
+            <div class="form-group">
+                <label>最大人数</label>
+                <select id="maxPlayers">
+                    <option value="4">4人</option>
+                    <option value="5">5人</option>
+                    <option value="6">6人</option>
+                    <option value="7">7人</option>
+                    <option value="8">8人</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>パスワード（任意）</label>
+                <input type="password" id="roomPassword" placeholder="空欄で公開ルーム" />
+            </div>
+            <button class="menu-button" onclick="createRoom()">作成</button>
+        </div>
+    </div>
 
-            <div class="main-content">
-                <!-- プレイヤー一覧 -->
-                <div class="players-panel">
-                    <h3>🎭 参加者</h3>
-                    <div id="playersList"></div>
+    <!-- ルーム参加画面 -->
+    <div class="room-screen" id="joinRoomScreen">
+        <button class="back-button" onclick="backToMenu()">← 戻る</button>
+        <div class="room-form">
+            <h2 style="color: #FFD700; margin-bottom: 30px;">ルーム参加</h2>
+            <div class="form-group">
+                <label>プレイヤー名</label>
+                <input type="text" id="playerName" placeholder="あなたの名前" />
+            </div>
+            <div class="form-group">
+                <label>招待コード</label>
+                <input type="text" id="inviteCode" placeholder="6桁のコード" />
+            </div>
+            <button class="menu-button" onclick="joinRoom()">参加</button>
+        </div>
+    </div>
+
+    <!-- ゲーム画面 -->
+    <div class="game-screen" id="gameScreen">
+        <div class="game-header">
+            <div class="phase-display" id="phaseDisplay">フェーズ: 準備中</div>
+            <div class="timer" id="timer">00:00</div>
+            <button class="back-button" onclick="leaveGame()">退出</button>
+        </div>
+        
+        <div class="game-main">
+            <div class="players-panel">
+                <h3 style="color: #FFD700; margin-bottom: 20px;">プレイヤー</h3>
+                <div id="playersList"></div>
+            </div>
+            
+            <div class="chat-area">
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" id="chatInput" placeholder="メッセージを入力..." onkeypress="handleChatKeyPress(event)" />
+                    <button class="send-button" onclick="sendMessage()">送信</button>
                 </div>
-
-                <!-- メインエリア -->
-                <div class="center-panel">
-                    <div class="chat-container" id="chatContainer">
-                        <!-- チャットメッセージが表示される -->
+            </div>
+            
+            <div class="info-panel">
+                <div class="tab-buttons">
+                    <button class="tab-button active" onclick="switchTab('evidence')">証拠品</button>
+                    <button class="tab-button" onclick="switchTab('timeline')">タイムライン</button>
+                    <button class="tab-button" onclick="switchTab('suspects')">容疑者</button>
+                </div>
+                <div class="tab-content active" id="evidenceTab"></div>
+                <div class="tab-content" id="timelineTab">
+                    <div style="color: #ccc; line-height: 1.6;">
+                        <p><strong>20:00</strong> - 夕食会開始</p>
+                        <p><strong>21:00</strong> - 被害者が書斎へ</p>
+                        <p><strong>21:30</strong> - 不審な物音</p>
+                        <p><strong>22:00</strong> - 被害者発見</p>
                     </div>
-                    <div class="chat-input">
-                        <input type="text" id="messageInput" placeholder="メッセージを入力..." maxlength="200">
-                        <button class="btn" onclick="sendMessage()">送信</button>
-                    </div>
                 </div>
-
-                <!-- 情報パネル -->
-                <div class="info-panel">
-                    <h3>📋 あなたの情報</h3>
-                    <div id="characterInfo"></div>
-                    
-                    <h3>🔍 証拠品</h3>
-                    <ul id="evidenceList" class="evidence-list"></ul>
-                </div>
-            </div>
-
-            <!-- 投票セクション -->
-            <div id="votingSection" class="voting-section" style="display: none;">
-                <h3>🗳️ 犯人投票</h3>
-                <p>誰が犯人だと思いますか？</p>
-                <div id="voteGrid" class="vote-grid"></div>
-                <button class="btn btn-primary" onclick="submitVote()" style="margin-top: 15px;">投票する</button>
+                <div class="tab-content" id="suspectsTab"></div>
             </div>
         </div>
-
-        <!-- 結果モーダル -->
-        <div id="resultModal" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal()">&times;</span>
-                <h2>🎊 ゲーム結果</h2>
-                <div id="resultContent"></div>
-                <button class="btn btn-primary" onclick="restartGame()" style="margin-top: 20px;">もう一度プレイ</button>
+        
+        <div class="personal-info">
+            <div class="handout-section">
+                <div class="section-title">個人情報</div>
+                <div class="handout-content" id="handoutContent">
+                    あなたの役職と秘密の情報がここに表示されます
+                </div>
+            </div>
+            <div class="notes-section">
+                <div class="section-title">推理ノート</div>
+                <textarea class="notes-textarea" id="notesArea" placeholder="メモを記入..."></textarea>
             </div>
         </div>
     </div>
 
+    <!-- 投票モーダル -->
+    <div class="modal" id="voteModal">
+        <div class="modal-content">
+            <h2 class="modal-title">犯人投票</h2>
+            <p style="color: #ccc; margin-bottom: 20px; text-align: center;">
+                あなたが犯人だと思う人物を選んでください
+            </p>
+            <div class="vote-options" id="voteOptions"></div>
+            <button class="vote-submit" id="voteSubmit" onclick="submitVote()" disabled>投票する</button>
+        </div>
+    </div>
+
+    <!-- 結果画面 -->
+    <div class="result-screen" id="resultScreen">
+        <h1 class="result-title">事件解決</h1>
+        <div class="culprit-reveal">
+            <div class="culprit-text">真犯人は...</div>
+            <div class="culprit-name" id="culpritName">料理人</div>
+        </div>
+        
+        <div class="truth-section">
+            <div class="truth-title">事件の真相</div>
+            <div class="truth-content">
+                被害者は長年、料理人の家族を苦しめていました。
+                医療費に困窮した料理人は、遺産を狙って犯行に及びました。
+                毒入りのブランデーは、料理人が事前に仕込んだものでした。
+            </div>
+        </div>
+        
+        <div class="truth-section">
+            <div class="truth-title">各キャラクターの秘密</div>
+            <div class="truth-content" id="secretsReveal">
+                各プレイヤーの隠された真実がここに表示されます
+            </div>
+        </div>
+        
+        <button class="restart-button" onclick="restartGame()">新しいゲームを始める</button>
+    </div>
+
     <script>
+        // ゲームデータ
+        const characters = [
+            { id: 1, name: '富豪の息子', icon: '👨', description: '大学生、相続問題を抱える', secret: '実は父親の会社の不正を知っていた' },
+            { id: 2, name: '秘書', icon: '👩', description: '被害者の右腕', secret: '被害者と不倫関係にあった' },
+            { id: 3, name: '料理人', icon: '👨‍🍳', description: 'ベテラン料理人', secret: '家族の医療費のため借金をしていた' },
+            { id: 4, name: 'メイド', icon: '👩‍💼', description: '新人メイド', secret: '過去に窃盗の前科がある' },
+            { id: 5, name: '医師', icon: '👨‍⚕️', description: '家族の友人', secret: 'ギャンブルで多額の借金' },
+            { id: 6, name: '弁護士', icon: '👨‍💼', description: '遺言書作成担当', secret: '遺言書を偽造していた' },
+            { id: 7, name: '作家', icon: '✍️', description: '取材で滞在中', secret: '被害者の過去の犯罪を調査中' },
+            { id: 8, name: '庭師', icon: '👨‍🌾', description: '長年の使用人', secret: '被害者に娘を傷つけられた過去' }
+        ];
+
+        const evidence = [
+            { id: 1, title: '毒入りブランデー', description: '被害者が飲んでいたグラス。青酸カリが検出された。', found: false },
+            { id: 2, title: '破れた遺言書', description: '書斎で発見。一部が破り取られている。', found: false },
+            { id: 3, title: '被害者の日記', description: '最近、誰かに脅迫されていたことが記されている。', found: false },
+            { id: 4, title: '通話記録', description: '事件当夜、複数の不審な電話があった。', found: false },
+            { id: 5, title: '薬品の空き瓶', description: '庭で発見。ラベルが剥がされている。', found: false },
+            { id: 6, title: '隠し通路の地図', description: '屋敷には秘密の通路があることが判明。', found: false }
+        ];
+
+        const gamePhases = [
+            { name: '準備', duration: 600 },
+            { name: '情報収集', duration: 1200 },
+            { name: '議論フェーズ1', duration: 1500 },
+            { name: '密談', duration: 900 },
+            { name: '議論フェーズ2', duration: 1500 },
+            { name: '投票', duration: 300 },
+            { name: '結果発表', duration: 0 }
+        ];
+
         // ゲーム状態
         let gameState = {
             currentPhase: 0,
-            timeLeft: 300,
+            timeRemaining: 0,
             players: [],
             currentPlayer: null,
-            selectedCharacter: null,
-            votes: {},
+            selectedVote: null,
             messages: [],
-            evidence: [],
-            isVotingPhase: false
+            roomCode: '',
+            isHost: false
         };
 
-        // フェーズ設定
-        const phases = [
-            { name: "準備フェーズ", duration: 300 },
-            { name: "情報収集", duration: 600 },
-            { name: "第1回議論", duration: 900 },
-            { name: "密談タイム", duration: 300 },
-            { name: "最終議論", duration: 900 },
-            { name: "投票フェーズ", duration: 300 },
-            { name: "結果発表", duration: 0 }
-        ];
-
-        // キャラクター設定
-        const characters = [
-            {
-                id: 'son',
-                name: '息子 - 大学生のタケシ',
-                role: '被害者の息子',
-                description: '父親の遺産相続に悩む大学生。最近父親と金銭トラブルがあった。',
-                secret: '実は多額の借金があり、父親に泣きついていた。',
-                alibi: '事件当時、自室で勉強していた。',
-                isCriminal: false
-            },
-            {
-                id: 'secretary',
-                name: '秘書 - 美咲',
-                role: '被害者の秘書',
-                description: '10年間仕える有能な秘書。被害者の全ての秘密を知っている。',
-                secret: '被害者の不正な取引を知っており、それを理由に昇給を要求していた。',
-                alibi: '事件当時、書類整理をしていた。',
-                isCriminal: true // 真犯人
-            },
-            {
-                id: 'chef',
-                name: '料理人 - 田中',
-                role: '専属料理人',
-                description: '家族の医療費のため働いているベテラン料理人。',
-                secret: '実は料理に睡眠薬を混ぜたことがある（今回の事件とは無関係）。',
-                alibi: '事件当時、キッチンで翌日の準備をしていた。',
-                isCriminal: false
-            },
-            {
-                id: 'maid',
-                name: 'メイド - 花子',
-                role: '新人メイド',
-                description: '3ヶ月前から働き始めた新人。過去に問題を起こして前職を辞めた。',
-                secret: '前職で窃盗の疑いをかけられて辞めた（実際は濡れ衣）。',
-                alibi: '事件当時、2階の掃除をしていた。',
-                isCriminal: false
-            },
-            {
-                id: 'doctor',
-                name: '医師 - 佐藤先生',
-                role: '家族の友人',
-                description: '被害者家族の古い友人で、定期的に健康診断をしている医師。',
-                secret: '実は多額の借金があり、被害者にお金を借りていた。',
-                alibi: '事件当時、庭で電話をしていた。',
-                isCriminal: false
-            },
-            {
-                id: 'lawyer',
-                name: '弁護士 - 鈴木',
-                role: '顧問弁護士',
-                description: '被害者の遺言書作成に関わっている弁護士。',
-                secret: '遺言書の内容を事前に息子に教えてしまった。',
-                alibi: '事件当時、書斎で遺言書の最終確認をしていた。',
-                isCriminal: false
-            }
-        ];
-
-        // 証拠品
-        const evidenceItems = [
-            '毒入りブランデーグラス - 被害者が飲んでいたグラスから毒物検出',
-            '破かれた遺言書 - 書斎で発見された遺言書の断片',
-            '被害者の日記 - 最近の人間関係について記述',
-            '不審な電話記録 - 事件前日の謎の電話',
-            '空の薬瓶 - 書斎の隅で発見された薬品の容器',
-            '別荘の見取り図 - 秘密の通路が記されている'
-        ];
-
-        let timer;
-
         // 初期化
-        function initGame() {
-            displayCharacterSelection();
+        window.onload = function() {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('mainMenu').style.display = 'block';
+                }, 500);
+            }, 1500);
+        };
+
+        // メニュー機能
+        function showCreateRoom() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('createRoomScreen').style.display = 'block';
         }
 
-        // キャラクター選択表示
-        function displayCharacterSelection() {
-            const container = document.getElementById('characterSelection');
-            container.innerHTML = '';
-            
-            characters.forEach(character => {
-                const div = document.createElement('div');
-                div.className = 'character-option';
-                div.onclick = () => selectCharacter(character.id);
-                div.innerHTML = `
-                    <div class="character-name">${character.name}</div>
-                    <div class="character-details">${character.description}</div>
-                `;
-                container.appendChild(div);
-            });
+        function showJoinRoom() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('joinRoomScreen').style.display = 'block';
         }
 
-        // キャラクター選択
-        function selectCharacter(characterId) {
-            // 前の選択を解除
-            document.querySelectorAll('.character-option').forEach(el => {
-                el.classList.remove('selected');
+        function showTutorial() {
+            alert('チュートリアル\n\n1. ルームを作成または参加\n2. キャラクターを選択\n3. 配られた情報を確認\n4. 議論を通じて犯人を推理\n5. 投票で犯人を決定\n\n各プレイヤーには秘密があります。\n真実を見抜いて犯人を特定しましょう！');
+        }
+
+        function showSettings() {
+            alert('設定画面（実装予定）\n\n・音量調整\n・通知設定\n・画質設定');
+        }
+
+        function backToMenu() {
+            document.querySelectorAll('.room-screen').forEach(screen => {
+                screen.style.display = 'none';
             });
+            document.getElementById('mainMenu').style.display = 'block';
+        }
+
+        // ルーム作成
+        function createRoom() {
+            const roomName = document.getElementById('roomName').value;
+            const hostName = document.getElementById('hostName').value;
             
-            // 新しい選択を適用
-            event.target.closest('.character-option').classList.add('selected');
-            gameState.selectedCharacter = characterId;
+            if (!roomName || !hostName) {
+                alert('ルーム名とプレイヤー名を入力してください');
+                return;
+            }
+            
+            gameState.roomCode = generateRoomCode();
+            gameState.isHost = true;
+            gameState.currentPlayer = {
+                name: hostName,
+                character: characters[0],
+                isHost: true
+            };
+            
+            alert(`ルームを作成しました！\n招待コード: ${gameState.roomCode}`);
+            startGame();
+        }
+
+        // ルーム参加
+        function joinRoom() {
+            const playerName = document.getElementById('playerName').value;
+            const inviteCode = document.getElementById('inviteCode').value;
+            
+            if (!playerName || !inviteCode) {
+                alert('プレイヤー名と招待コードを入力してください');
+                return;
+            }
+            
+            gameState.roomCode = inviteCode;
+            gameState.currentPlayer = {
+                name: playerName,
+                character: characters[Math.floor(Math.random() * characters.length)],
+                isHost: false
+            };
+            
+            startGame();
+        }
+
+        // ルームコード生成
+        function generateRoomCode() {
+            return Math.random().toString(36).substr(2, 6).toUpperCase();
         }
 
         // ゲーム開始
         function startGame() {
-            const playerName = document.getElementById('playerNameInput').value.trim();
-            if (!playerName) {
-                alert('プレイヤー名を入力してください');
-                return;
-            }
+            document.querySelectorAll('.room-screen').forEach(screen => {
+                screen.style.display = 'none';
+            });
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'grid';
             
-            if (!gameState.selectedCharacter) {
-                alert('キャラクターを選択してください');
-                return;
-            }
-
-            // プレイヤー初期化
-            gameState.currentPlayer = {
-                name: playerName,
-                characterId: gameState.selectedCharacter
-            };
-
-            // NPCプレイヤーを追加
-            initializePlayers();
-            
-            // 画面切り替え
-            document.getElementById('setupScreen').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'block';
-            
-            // ゲーム開始
-            updateDisplay();
-            startTimer();
-            addSystemMessage('ゲーム開始！嵐により外部と遮断された別荘で殺人事件が発生しました...');
-            addSystemMessage('被害者：富豪の父親（別荘の主人）');
-            addSystemMessage('死因：毒殺');
-            addSystemMessage('発見場所：書斎');
-            addSystemMessage('発見時刻：夜10時頃');
+            initializeGame();
+            startPhase(0);
         }
 
-        // プレイヤー初期化
-        function initializePlayers() {
-            gameState.players = [];
-            
-            // 現在のプレイヤーを追加
-            const playerCharacter = characters.find(c => c.id === gameState.selectedCharacter);
-            gameState.players.push({
-                name: gameState.currentPlayer.name,
-                character: playerCharacter,
-                isCurrentPlayer: true
-            });
-
-            // 他のキャラクターをNPCとして追加
-            characters.forEach(character => {
-                if (character.id !== gameState.selectedCharacter) {
+        // ゲーム初期化
+        function initializeGame() {
+            // ダミープレイヤー生成
+            gameState.players = [gameState.currentPlayer];
+            for (let i = 1; i < 6; i++) {
+                if (i < characters.length && characters[i] !== gameState.currentPlayer.character) {
                     gameState.players.push({
-                        name: character.name.split(' - ')[1] || character.name,
-                        character: character,
-                        isCurrentPlayer: false
+                        name: `プレイヤー${i + 1}`,
+                        character: characters[i],
+                        isHost: false
                     });
                 }
-            });
-
-            // 証拠品初期化
-            gameState.evidence = evidenceItems.slice(0, 3); // 最初は3つの証拠
+            }
+            
+            updatePlayersList();
+            updateEvidence();
+            updateHandout();
+            
+            // 初期メッセージ
+            addSystemMessage('ゲームを開始しました');
+            addSystemMessage(`招待コード: ${gameState.roomCode}`);
         }
 
-        // 表示更新
-        function updateDisplay() {
-            updatePlayersList();
-            updateCharacterInfo();
-            updateEvidenceList();
-            updatePhaseDisplay();
+        // フェーズ開始
+        function startPhase(phaseIndex) {
+            if (phaseIndex >= gamePhases.length) return;
+            
+            gameState.currentPhase = phaseIndex;
+            const phase = gamePhases[phaseIndex];
+            gameState.timeRemaining = phase.duration;
+            
+            document.getElementById('phaseDisplay').textContent = `フェーズ: ${phase.name}`;
+            addSystemMessage(`【${phase.name}フェーズ開始】`);
+            
+            // フェーズ別処理
+            switch(phase.name) {
+                case '情報収集':
+                    revealEvidence([1, 2]);
+                    break;
+                case '議論フェーズ1':
+                    revealEvidence([3, 4]);
+                    break;
+                case '議論フェーズ2':
+                    revealEvidence([5, 6]);
+                    break;
+                case '投票':
+                    showVoteModal();
+                    break;
+                case '結果発表':
+                    showResult();
+                    break;
+            }
+            
+            if (phase.duration > 0) {
+                startTimer();
+            }
+        }
+
+        // タイマー
+        let timerInterval;
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                gameState.timeRemaining--;
+                updateTimerDisplay();
+                
+                if (gameState.timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    nextPhase();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(gameState.timeRemaining / 60);
+            const seconds = gameState.timeRemaining % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function nextPhase() {
+            startPhase(gameState.currentPhase + 1);
         }
 
         // プレイヤーリスト更新
@@ -688,388 +1086,229 @@
             container.innerHTML = '';
             
             gameState.players.forEach(player => {
-                const div = document.createElement('div');
-                div.className = `player-card ${player.isCurrentPlayer ? 'current-player' : ''}`;
-                div.innerHTML = `
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                if (player === gameState.currentPlayer) {
+                    card.classList.add('selected');
+                }
+                
+                card.innerHTML = `
+                    <div class="player-avatar">${player.character.icon}</div>
                     <div class="player-name">${player.name}</div>
-                    <div class="player-role">${player.character.role}</div>
+                    <div class="player-role">${player.character.name}</div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // 証拠品更新
+        function updateEvidence() {
+            const container = document.getElementById('evidenceTab');
+            container.innerHTML = '';
+            
+            evidence.filter(e => e.found).forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'evidence-item';
+                div.innerHTML = `
+                    <div class="evidence-title">${item.title}</div>
+                    <div class="evidence-description">${item.description}</div>
                 `;
                 container.appendChild(div);
             });
-        }
-
-        // キャラクター情報更新
-        function updateCharacterInfo() {
-            const container = document.getElementById('characterInfo');
-            const currentPlayerData = gameState.players.find(p => p.isCurrentPlayer);
             
-            if (currentPlayerData) {
-                const character = currentPlayerData.character;
-                container.innerHTML = `
-                    <div class="character-info">
-                        <div class="character-name">${character.name}</div>
-                        <div class="character-details">
-                            <p><strong>役職：</strong>${character.role}</p>
-                            <p><strong>詳細：</strong>${character.description}</p>
-                            <p><strong>アリバイ：</strong>${character.alibi}</p>
-                        </div>
-                        <div class="secret-info">
-                            <div class="secret-title">🤫 あなたの秘密</div>
-                            <div>${character.secret}</div>
-                        </div>
-                    </div>
-                `;
+            if (container.innerHTML === '') {
+                container.innerHTML = '<p style="color: #666;">まだ証拠品は見つかっていません</p>';
             }
         }
 
-        // 証拠品リスト更新
-        function updateEvidenceList() {
-            const container = document.getElementById('evidenceList');
-            container.innerHTML = '';
-            
-            gameState.evidence.forEach((evidence, index) => {
-                const li = document.createElement('li');
-                li.className = 'evidence-item';
-                li.textContent = evidence;
-                li.onclick = () => shareEvidence(index);
-                container.appendChild(li);
+        // 証拠品公開
+        function revealEvidence(ids) {
+            ids.forEach(id => {
+                const item = evidence.find(e => e.id === id);
+                if (item && !item.found) {
+                    item.found = true;
+                    addSystemMessage(`新しい証拠品「${item.title}」が発見されました`);
+                }
             });
+            updateEvidence();
         }
 
-        // フェーズ表示更新
-        function updatePhaseDisplay() {
-            document.getElementById('currentPhase').textContent = phases[gameState.currentPhase].name;
-            
-            // 投票フェーズの表示制御
-            if (gameState.currentPhase === 5) {
-                showVotingSection();
-            } else {
-                document.getElementById('votingSection').style.display = 'none';
-            }
+        // ハンドアウト更新
+        function updateHandout() {
+            const character = gameState.currentPlayer.character;
+            document.getElementById('handoutContent').innerHTML = `
+                <p><strong>役職:</strong> ${character.name}</p>
+                <p><strong>公開情報:</strong> ${character.description}</p>
+                <p style="color: #ff4444; margin-top: 10px;"><strong>秘密:</strong> ${character.secret}</p>
+                <p style="color: #FFD700; margin-top: 10px;"><strong>個人目標:</strong> あなたの秘密を隠し通し、生き残ること</p>
+            `;
         }
 
-        // タイマー開始
-        function startTimer() {
-            gameState.timeLeft = phases[gameState.currentPhase].duration;
-            updateTimer();
-            
-            timer = setInterval(() => {
-                gameState.timeLeft--;
-                updateTimer();
-                
-                if (gameState.timeLeft <= 0) {
-                    clearInterval(timer);
-                    if (gameState.currentPhase < phases.length - 1) {
-                        nextPhase();
-                    }
-                }
-            }, 1000);
-        }
-
-        // タイマー更新
-        function updateTimer() {
-            const minutes = Math.floor(gameState.timeLeft / 60);
-            const seconds = gameState.timeLeft % 60;
-            document.getElementById('timer').textContent = 
-                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        // 次のフェーズ
-        function nextPhase() {
-            clearInterval(timer);
-            
-            if (gameState.currentPhase < phases.length - 1) {
-                gameState.currentPhase++;
-                
-                // フェーズ変更時の処理
-                switch (gameState.currentPhase) {
-                    case 1:
-                        addSystemMessage('情報収集フェーズ開始！各自の情報を共有しましょう。');
-                        addMoreEvidence();
-                        break;
-                    case 2:
-                        addSystemMessage('第1回議論開始！疑わしい点について話し合いましょう。');
-                        simulateNPCMessages();
-                        break;
-                    case 3:
-                        addSystemMessage('密談タイム！個別に相談することができます。');
-                        break;
-                    case 4:
-                        addSystemMessage('最終議論！これまでの情報を整理して犯人を特定しましょう。');
-                        addMoreEvidence();
-                        break;
-                    case 5:
-                        addSystemMessage('投票フェーズ！犯人だと思う人に投票してください。');
-                        break;
-                    case 6:
-                        showResults();
-                        return;
-                }
-                
-                updateDisplay();
-                if (phases[gameState.currentPhase].duration > 0) {
-                    startTimer();
-                }
-            }
-        }
-
-        // 追加証拠品
-        function addMoreEvidence() {
-            if (gameState.evidence.length < evidenceItems.length) {
-                const newEvidence = evidenceItems[gameState.evidence.length];
-                gameState.evidence.push(newEvidence);
-                updateEvidenceList();
-                addSystemMessage(`新しい証拠が発見されました：${newEvidence}`);
-            }
-        }
-
-        // NPCメッセージシミュレーション
-        function simulateNPCMessages() {
-            const npcMessages = [
-                { sender: '田中（料理人）', message: '私は事件当時キッチンにいました。誰も見ていませんが...' },
-                { sender: '花子（メイド）', message: '2階で掃除をしていて、何も見ていません。' },
-                { sender: '佐藤先生', message: '庭で電話をしていました。重要な話だったので...' },
-                { sender: '美咲（秘書）', message: '書類整理をしていました。いつも通りの作業です。' }
-            ];
-            
-            let delay = 2000;
-            npcMessages.forEach((msg, index) => {
-                setTimeout(() => {
-                    addMessage(msg.sender, msg.message);
-                }, delay * (index + 1));
-            });
-        }
-
-        // メッセージ送信
+        // チャット機能
         function sendMessage() {
-            const input = document.getElementById('messageInput');
+            const input = document.getElementById('chatInput');
             const message = input.value.trim();
             
             if (message) {
                 addMessage(gameState.currentPlayer.name, message);
                 input.value = '';
                 
-                // NPCの簡単な反応をシミュレート
+                // AIレスポンス（シミュレーション）
                 setTimeout(() => {
-                    simulateNPCResponse(message);
+                    simulateAIResponse();
                 }, 1000 + Math.random() * 2000);
             }
         }
 
-        // エンターキーでメッセージ送信
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('messageInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    sendMessage();
-                }
-            });
-        });
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
 
-        // メッセージ追加
-        function addMessage(sender, message) {
-            gameState.messages.push({ sender, message, timestamp: Date.now() });
-            
-            const container = document.getElementById('chatContainer');
-            const div = document.createElement('div');
-            div.className = 'chat-message';
-            div.innerHTML = `
-                <span class="message-sender">${sender}:</span>
-                <span class="message-content">${message}</span>
+        function addMessage(sender, text) {
+            const container = document.getElementById('chatMessages');
+            const message = document.createElement('div');
+            message.className = 'message';
+            message.innerHTML = `
+                <div class="message-sender">${sender}</div>
+                <div class="message-text">${text}</div>
             `;
-            container.appendChild(div);
+            container.appendChild(message);
             container.scrollTop = container.scrollHeight;
         }
 
-        // システムメッセージ追加
-        function addSystemMessage(message) {
-            const container = document.getElementById('chatContainer');
-            const div = document.createElement('div');
-            div.className = 'chat-message system-message';
-            div.innerHTML = `
-                <span class="message-sender">🎭 システム:</span>
-                <span class="message-content">${message}</span>
-            `;
-            container.appendChild(div);
+        function addSystemMessage(text) {
+            const container = document.getElementById('chatMessages');
+            const message = document.createElement('div');
+            message.className = 'message system-message';
+            message.innerHTML = `<div class="message-text">${text}</div>`;
+            container.appendChild(message);
             container.scrollTop = container.scrollHeight;
         }
 
-        // NPCの反応をシミュレート
-        function simulateNPCResponse(playerMessage) {
+        // AIレスポンスシミュレーション
+        function simulateAIResponse() {
             const responses = [
-                { name: '田中（料理人）', responses: ['そうですね...', '気になりますね', '私も同感です'] },
-                { name: '花子（メイド）', responses: ['えっと...', 'そうなんですか？', '知りませんでした'] },
-                { name: '佐藤先生', responses: ['なるほど', 'それは重要ですね', '確かに'] },
-                { name: '美咲（秘書）', responses: ['そんなことは...', 'どうでしょうか', '私は違うと思います'] }
+                '私は何も知りません...',
+                'その時間、私は別の場所にいました',
+                '確かに怪しい音は聞こえました',
+                '被害者とは良好な関係でした',
+                'その証拠は信用できるのでしょうか？',
+                '他に目撃者はいないのですか？',
+                '私には動機がありません'
             ];
             
-            const randomNPC = responses[Math.floor(Math.random() * responses.length)];
-            const randomResponse = randomNPC.responses[Math.floor(Math.random() * randomNPC.responses.length)];
-            
-            addMessage(randomNPC.name, randomResponse);
-        }
-
-        // 証拠品共有
-        function shareEvidence(index) {
-            const evidence = gameState.evidence[index];
-            addMessage(gameState.currentPlayer.name, `証拠品を提示：${evidence}`);
-        }
-
-        // 投票セクション表示
-        function showVotingSection() {
-            document.getElementById('votingSection').style.display = 'block';
-            
-            const voteGrid = document.getElementById('voteGrid');
-            voteGrid.innerHTML = '';
-            
-            gameState.players.forEach(player => {
-                if (!player.isCurrentPlayer) {
-                    const button = document.createElement('div');
-                    button.className = 'vote-button';
-                    button.textContent = player.name;
-                    button.onclick = () => selectVote(player.name);
-                    voteGrid.appendChild(button);
-                }
-            });
-        }
-
-        // 投票選択
-        function selectVote(playerName) {
-            document.querySelectorAll('.vote-button').forEach(btn => {
-                btn.classList.remove('selected');
-            });
-            event.target.classList.add('selected');
-            gameState.selectedVote = playerName;
-        }
-
-        // 投票提出
-        function submitVote() {
-            if (!gameState.selectedVote) {
-                alert('投票する相手を選択してください');
-                return;
+            const randomPlayer = gameState.players.filter(p => p !== gameState.currentPlayer)[Math.floor(Math.random() * (gameState.players.length - 1))];
+            if (randomPlayer) {
+                addMessage(randomPlayer.name, responses[Math.floor(Math.random() * responses.length)]);
             }
-            
-            gameState.votes[gameState.currentPlayer.name] = gameState.selectedVote;
-            addSystemMessage(`${gameState.currentPlayer.name}が投票しました`);
-            
-            // NPCの投票をシミュレート
-            simulateNPCVotes();
-            
-            setTimeout(() => {
-                nextPhase();
-            }, 2000);
         }
 
-        // NPCの投票をシミュレート
-        function simulateNPCVotes() {
-            const npcs = gameState.players.filter(p => !p.isCurrentPlayer);
-            const votableTargets = gameState.players.map(p => p.name);
+        // タブ切り替え
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
-            npcs.forEach(npc => {
-                const possibleTargets = votableTargets.filter(name => name !== npc.name);
-                const randomTarget = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
-                gameState.votes[npc.name] = randomTarget;
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        // 投票モーダル
+        function showVoteModal() {
+            const modal = document.getElementById('voteModal');
+            const container = document.getElementById('voteOptions');
+            container.innerHTML = '';
+            
+            gameState.players.filter(p => p !== gameState.currentPlayer).forEach(player => {
+                const option = document.createElement('div');
+                option.className = 'vote-option';
+                option.onclick = () => selectVote(player);
+                option.innerHTML = `
+                    <div class="vote-name">${player.name}</div>
+                    <div class="vote-role">${player.character.name}</div>
+                `;
+                container.appendChild(option);
             });
+            
+            modal.classList.add('active');
+        }
+
+        function selectVote(player) {
+            document.querySelectorAll('.vote-option').forEach(opt => opt.classList.remove('selected'));
+            event.target.closest('.vote-option').classList.add('selected');
+            gameState.selectedVote = player;
+            document.getElementById('voteSubmit').disabled = false;
+        }
+
+        function submitVote() {
+            if (gameState.selectedVote) {
+                addSystemMessage(`${gameState.selectedVote.name}に投票しました`);
+                document.getElementById('voteModal').classList.remove('active');
+                setTimeout(() => nextPhase(), 2000);
+            }
         }
 
         // 結果表示
-        function showResults() {
-            clearInterval(timer);
+        function showResult() {
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('resultScreen').style.display = 'block';
             
-            // 投票結果の集計
-            const voteCount = {};
-            Object.values(gameState.votes).forEach(vote => {
-                voteCount[vote] = (voteCount[vote] || 0) + 1;
-            });
+            // 犯人表示（ランダム）
+            const culprit = characters[2]; // 料理人が犯人
+            document.getElementById('culpritName').textContent = culprit.name;
             
-            // 最多得票者を決定
-            let maxVotes = 0;
-            let suspectedCriminal = '';
-            Object.entries(voteCount).forEach(([name, votes]) => {
-                if (votes > maxVotes) {
-                    maxVotes = votes;
-                    suspectedCriminal = name;
-                }
-            });
-            
-            // 真犯人を特定
-            const actualCriminal = gameState.players.find(p => p.character.isCriminal);
-            const isCorrect = suspectedCriminal === actualCriminal.name;
-            
-            // 結果表示
-            let resultHTML = `
-                <h3>🗳️ 投票結果</h3>
-                <div style="margin: 20px 0;">
-            `;
-            
-            Object.entries(voteCount).forEach(([name, votes]) => {
-                resultHTML += `<p>${name}: ${votes}票</p>`;
-            });
-            
-            resultHTML += `</div>
-                <h3>🎭 真実の公開</h3>
-                <div style="margin: 20px 0;">
-                    <p><strong>真犯人：</strong>${actualCriminal.name}</p>
-                    <p><strong>動機：</strong>${actualCriminal.character.secret}</p>
-                    <p><strong>推理結果：</strong>${isCorrect ? '🎉 正解！' : '❌ 残念...'}</p>
-                </div>
-                
-                <h3>📚 各キャラクターの真実</h3>
-                <div style="margin: 20px 0;">
-            `;
-            
+            // 各キャラクターの秘密を表示
+            let secretsHTML = '';
             gameState.players.forEach(player => {
-                resultHTML += `
-                    <div style="margin: 10px 0; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px;">
-                        <strong>${player.name} (${player.character.role})</strong><br>
-                        秘密: ${player.character.secret}
-                    </div>
+                secretsHTML += `
+                    <p><strong>${player.character.name}（${player.name}）:</strong><br>
+                    ${player.character.secret}</p><br>
                 `;
             });
-            
-            resultHTML += '</div>';
-            
-            document.getElementById('resultContent').innerHTML = resultHTML;
-            document.getElementById('resultModal').style.display = 'flex';
+            document.getElementById('secretsReveal').innerHTML = secretsHTML;
         }
 
-        // モーダルを閉じる
-        function closeModal() {
-            document.getElementById('resultModal').style.display = 'none';
+        // ゲーム退出
+        function leaveGame() {
+            if (confirm('本当にゲームを退出しますか？')) {
+                clearInterval(timerInterval);
+                document.getElementById('gameScreen').style.display = 'none';
+                document.getElementById('resultScreen').style.display = 'none';
+                document.getElementById('mainMenu').style.display = 'block';
+                
+                // ゲーム状態リセット
+                gameState = {
+                    currentPhase: 0,
+                    timeRemaining: 0,
+                    players: [],
+                    currentPlayer: null,
+                    selectedVote: null,
+                    messages: [],
+                    roomCode: '',
+                    isHost: false
+                };
+            }
         }
 
-        // ゲームリスタート
+        // ゲーム再開
         function restartGame() {
-            // ゲーム状態をリセット
+            document.getElementById('resultScreen').style.display = 'none';
+            document.getElementById('mainMenu').style.display = 'block';
+            
+            // ゲーム状態リセット
             gameState = {
                 currentPhase: 0,
-                timeLeft: 300,
+                timeRemaining: 0,
                 players: [],
                 currentPlayer: null,
-                selectedCharacter: null,
-                votes: {},
+                selectedVote: null,
                 messages: [],
-                evidence: [],
-                isVotingPhase: false
+                roomCode: '',
+                isHost: false
             };
-            
-            // 画面をリセット
-            document.getElementById('playerNameInput').value = '';
-            document.getElementById('messageInput').value = '';
-            document.getElementById('chatContainer').innerHTML = '';
-            document.querySelectorAll('.character-option').forEach(el => {
-                el.classList.remove('selected');
-            });
-            
-            // セットアップ画面に戻る
-            document.getElementById('gameScreen').style.display = 'none';
-            document.getElementById('setupScreen').style.display = 'block';
-            closeModal();
-            
-            // キャラクター選択を再表示
-            displayCharacterSelection();
         }
-
-        // 初期化実行
-        document.addEventListener('DOMContentLoaded', function() {
-            initGame();
-        });
+    </script>
+</body>
+</html>
